@@ -1,4 +1,8 @@
 // Infrastructure 계층 - 외부 의존성 (DB, API 클라이언트)
+plugins {
+    kotlin("kapt")
+}
+
 dependencies {
     // 도메인 계층 의존
     implementation(project(":domain"))

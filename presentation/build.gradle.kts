@@ -9,13 +9,16 @@ dependencies {
     implementation(project(":application"))
     implementation(project(":infrastructure"))
     
-    // Spring Boot Web
+    // Spring Boot Web (로깅 포함)
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     
     // Jackson for JSON
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     
     // Development tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")

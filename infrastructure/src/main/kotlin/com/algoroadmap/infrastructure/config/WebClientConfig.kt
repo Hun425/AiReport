@@ -15,7 +15,7 @@ data class SolvedAcProperties(
 )
 
 @Configuration
-@EnableConfigurationProperties(SolvedAcProperties::class)
+@EnableConfigurationProperties(SolvedAcProperties::class, JwtProperties::class)
 class WebClientConfig {
     
     @Bean

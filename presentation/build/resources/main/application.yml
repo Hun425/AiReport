@@ -1,0 +1,75 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  # 데이터베이스 설정
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/algoroadmap}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:create-drop}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: ${SHOW_SQL:true}
+  
+  # OAuth2 설정 (추후 구현)
+  security:
+    oauth2:
+      client:
+        registration:
+          solved-ac:
+            client-id: ${SOLVED_AC_CLIENT_ID:}
+            client-secret: ${SOLVED_AC_CLIENT_SECRET:}
+            scope: read
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/auth/solvedac/callback"
+        provider:
+          solved-ac:
+            authorization-uri: https://solved.ac/oauth/authorize
+            token-uri: https://solved.ac/oauth/token
+            user-info-uri: https://solved.ac/api/v3/user/me
+
+# 애플리케이션 설정
+app:
+  jwt:
+    secret: ${JWT_SECRET:default-secret-for-local-development-only}
+    expiration: ${JWT_EXPIRATION:3600000} # 1시간
+  
+  external-api:
+    solved-ac:
+      base-url: ${SOLVED_AC_BASE_URL:https://solved.ac/api/v3}
+      timeout: ${SOLVED_AC_TIMEOUT:30s}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: ${OPENAI_MODEL:gpt-4}
+
+# 로깅 설정
+logging:
+  level:
+    com.algoroadmap: ${LOG_LEVEL:DEBUG}
+    org.springframework.security: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# 서버 설정
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api/v1
+
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

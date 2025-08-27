@@ -2,8 +2,8 @@ package com.algoroadmap.infrastructure.persistence
 
 import com.algoroadmap.domain.entity.Company
 import com.algoroadmap.domain.repository.CompanyRepository
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
+import com.algoroadmap.domain.repository.CompanyPage
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -17,5 +17,18 @@ class CompanyRepositoryImpl(
     
     override fun findAll(): List<Company> = companyJpaRepository.findAll()
     
-    override fun findAll(pageable: Pageable): Page<Company> = companyJpaRepository.findAll(pageable)
+    override fun findAll(page: Int, size: Int): CompanyPage {
+        val pageable = PageRequest.of(page, size)
+        val springPage = companyJpaRepository.findAll(pageable)
+        
+        return CompanyPage(
+            content = springPage.content,
+            page = springPage.number,
+            size = springPage.size,
+            totalElements = springPage.totalElements,
+            totalPages = springPage.totalPages,
+            hasNext = springPage.hasNext(),
+            hasPrevious = springPage.hasPrevious()
+        )
+    }
 }

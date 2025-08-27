@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15
+    container_name: algoroadmap-postgres
+    environment:
+      POSTGRES_DB: algoroadmap
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - algoroadmap-network
+    restart: unless-stopped
+
+  # Redis (캐싱용, 필요시)
+  redis:
+    image: redis:7-alpine
+    container_name: algoroadmap-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - algoroadmap-network
+    restart: unless-stopped
+
+  # 애플리케이션 (개발용)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: algoroadmap-app
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DATABASE_URL: jdbc:postgresql://postgres:5432/algoroadmap
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - algoroadmap-network
+    restart: unless-stopped
+    volumes:
+      # 개발 중 코드 변경 시 Hot Reload를 위한 볼륨 마운트
+      - .:/app
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  algoroadmap-network:
+    driver: bridge

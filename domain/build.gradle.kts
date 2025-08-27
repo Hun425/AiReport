@@ -2,5 +2,5 @@
 dependencies {
     // 도메인 계층은 외부 의존성을 최소화
     // JPA 어노테이션만 필요할 경우를 위해 추가
-    compileOnly("jakarta.persistence:jakarta.persistence-api")
+    implementation("jakarta.persistence:jakarta.persistence-api")
 }
