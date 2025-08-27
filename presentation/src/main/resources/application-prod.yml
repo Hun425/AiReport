@@ -1,0 +1,12 @@
+# 운영 환경 설정
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    com.algoroadmap: INFO
+    org.springframework.security: WARN
+    root: INFO

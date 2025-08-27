@@ -1,0 +1,15 @@
+# 로컬 개발 환경 설정
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+app:
+  jwt:
+    secret: local-development-jwt-secret-key-change-in-production
+
+logging:
+  level:
+    com.algoroadmap: DEBUG
+    org.springframework.web: DEBUG
