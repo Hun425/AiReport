@@ -19,10 +19,12 @@ class AuthController(
      * solved.ac OAuth 시작 - 사용자를 solved.ac 인증 페이지로 리디렉션
      */
     @GetMapping("/solvedac")
-    fun startSolvedAcAuth(response: HttpServletResponse) {
-        // TODO: 실제 solved.ac OAuth URL로 리디렉션
-        // 현재는 Mock 테스트용으로 바로 콜백으로 리디렉션
-        response.sendRedirect("/api/v1/auth/solvedac/callback?code=mock-auth-code")
+    fun startSolvedAcAuth(
+        response: HttpServletResponse,
+        @RequestParam(required = false) state: String?
+    ) {
+        val authorizationUrl = authService.getAuthorizationUrl(state)
+        response.sendRedirect(authorizationUrl)
     }
     
     /**
@@ -62,6 +64,16 @@ class AuthController(
             )
             
             ResponseEntity.ok(successResponse)
+            
+        } catch (e: DomainException.OAuthAuthenticationException) {
+            val errorResponse = mapOf(
+                "error" to mapOf(
+                    "code" to "OAUTH_AUTHENTICATION_FAILED",
+                    "message" to "OAuth 인증에 실패했습니다",
+                    "details" to e.message
+                )
+            )
+            ResponseEntity.badRequest().body(errorResponse)
             
         } catch (e: DomainException) {
             val errorResponse = mapOf(

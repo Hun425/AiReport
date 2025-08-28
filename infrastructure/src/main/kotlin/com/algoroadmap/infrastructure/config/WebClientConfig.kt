@@ -30,4 +30,14 @@ class WebClientConfig {
             }
             .build()
     }
+    
+    @Bean("oauthWebClient")
+    fun oauthWebClient(builder: WebClient.Builder): WebClient {
+        return builder
+            .defaultHeaders { headers ->
+                headers.add("User-Agent", "AlgoroadmapService/1.0")
+                headers.add("Accept", "application/json")
+            }
+            .build()
+    }
 }

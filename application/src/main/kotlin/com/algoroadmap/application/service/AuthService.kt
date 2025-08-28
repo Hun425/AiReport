@@ -10,6 +10,7 @@ import com.algoroadmap.domain.repository.UserRepository
 import com.algoroadmap.domain.service.SolvedAcService
 import com.algoroadmap.domain.service.SolvedAcUserData
 import com.algoroadmap.domain.service.TokenService
+import com.algoroadmap.infrastructure.external.SolvedAcOAuthClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -19,43 +20,56 @@ import java.time.LocalDateTime
 class AuthService(
     private val userRepository: UserRepository,
     private val solvedAcService: SolvedAcService,
-    private val tokenService: TokenService
+    private val tokenService: TokenService,
+    private val solvedAcOAuthClient: SolvedAcOAuthClient
 ) {
+    
+    /**
+     * solved.ac OAuth 인증 URL 생성
+     */
+    fun getAuthorizationUrl(state: String? = null): String {
+        return solvedAcOAuthClient.getAuthorizationUrl(state)
+    }
     
     /**
      * solved.ac OAuth 콜백 처리
      */
     suspend fun handleSolvedAcCallback(request: OAuthCallbackRequest): AuthResult {
-        // TODO: 실제로는 OAuth code를 사용해 access_token을 획득해야 함
-        // 지금은 Mock으로 구현
-        
-        // Mock: code에서 사용자 핸들을 추출 (실제로는 OAuth 서버에서 사용자 정보 조회)
-        val mockHandle = "goddold" // 실제로는 OAuth 서버 응답에서 추출
-        
-        // solved.ac API에서 사용자 정보 조회
-        val solvedAcUser = solvedAcService.fetchUserData(mockHandle)
-            ?: throw DomainException.UserNotFoundByHandleException(mockHandle)
-        
-        // 기존 사용자 확인 또는 새 사용자 생성
-        val existingUser = userRepository.findByHandle(solvedAcUser.handle)
-        val isNewUser = existingUser == null
-        
-        val user = if (existingUser != null) {
-            // 기존 사용자 정보 업데이트
-            updateUserFromSolvedAc(existingUser, solvedAcUser)
-        } else {
-            // 새 사용자 생성
-            createUserFromSolvedAc(solvedAcUser)
+        try {
+            // 1. 인증 코드로 액세스 토큰 획득
+            val tokenResponse = solvedAcOAuthClient.exchangeCodeForToken(request.code)
+            
+            // 2. 액세스 토큰으로 사용자 정보 조회
+            val userInfo = solvedAcOAuthClient.getUserInfo(tokenResponse.accessToken)
+            
+            // 3. solved.ac API에서 상세 사용자 데이터 조회
+            val solvedAcUser = solvedAcService.fetchUserData(userInfo.handle)
+                ?: throw DomainException.UserNotFoundByHandleException(userInfo.handle)
+            
+            // 4. 기존 사용자 확인 또는 새 사용자 생성
+            val existingUser = userRepository.findByHandle(userInfo.handle)
+            val isNewUser = existingUser == null
+            
+            val user = if (existingUser != null) {
+                // 기존 사용자 정보 업데이트
+                updateUserFromSolvedAc(existingUser, solvedAcUser)
+            } else {
+                // 새 사용자 생성
+                createUserFromSolvedAc(solvedAcUser)
+            }
+            
+            // 5. JWT 토큰 생성
+            val accessToken = tokenService.generateToken(user.id, user.solvedAcHandle)
+            
+            return AuthResult(
+                accessToken = accessToken,
+                user = user.toUserResponse(),
+                isNewUser = isNewUser
+            )
+            
+        } catch (e: Exception) {
+            throw DomainException.OAuthAuthenticationException("OAuth 인증 중 오류 발생: ${e.message}", e)
         }
-        
-        // JWT 토큰 생성
-        val accessToken = tokenService.generateToken(user.id, user.solvedAcHandle)
-        
-        return AuthResult(
-            accessToken = accessToken,
-            user = user.toUserResponse(),
-            isNewUser = isNewUser
-        )
     }
     
     private fun updateUserFromSolvedAc(
