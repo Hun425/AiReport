@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.LocalDateTime
 
 /**
@@ -21,7 +20,7 @@ class GlobalExceptionHandler {
     /**
      * 도메인 예외 처리
      */
-    @ExceptionHandler(DomainException::class)
+    @ExceptionHandler
     fun handleDomainException(ex: DomainException): ResponseEntity<ApiErrorResponse> {
         logger.warn("도메인 예외 발생: {}", ex.message, ex)
         
@@ -34,8 +33,8 @@ class GlobalExceptionHandler {
     /**
      * WebClient 응답 예외 처리 (외부 API 호출 오류)
      */
-    @ExceptionHandler(WebClientResponseException::class)
-    fun handleWebClientResponseException(ex: WebClientResponseException): ResponseEntity<ApiErrorResponse> {
+    @ExceptionHandler
+    fun handleWebClientResponseException(ex: org.springframework.web.reactive.function.client.WebClientResponseException): ResponseEntity<ApiErrorResponse> {
         logger.error("외부 API 호출 오류: status={}, body={}", ex.statusCode, ex.responseBodyAsString, ex)
         
         val errorResponse = ApiErrorResponse.from(
@@ -49,7 +48,7 @@ class GlobalExceptionHandler {
     /**
      * 유효성 검증 실패 예외 처리
      */
-    @ExceptionHandler(MethodArgumentNotValidException::class)
+    @ExceptionHandler
     fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> {
         logger.warn("입력 데이터 검증 실패: {}", ex.message)
         
@@ -68,7 +67,7 @@ class GlobalExceptionHandler {
     /**
      * 인증 실패 예외 처리
      */
-    @ExceptionHandler(SecurityException::class)
+    @ExceptionHandler
     fun handleSecurityException(ex: SecurityException): ResponseEntity<ApiErrorResponse> {
         logger.warn("보안 예외 발생: {}", ex.message, ex)
         
@@ -80,7 +79,7 @@ class GlobalExceptionHandler {
     /**
      * 일반 예외 처리
      */
-    @ExceptionHandler(Exception::class)
+    @ExceptionHandler
     fun handleGeneralException(ex: Exception): ResponseEntity<ApiErrorResponse> {
         logger.error("예상치 못한 오류 발생: {}", ex.message, ex)
         
