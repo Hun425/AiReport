@@ -29,4 +29,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    
+    // SpringDoc OpenAPI (Swagger)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 }

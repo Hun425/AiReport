@@ -3,6 +3,11 @@ package com.algoroadmap.presentation.controller
 import com.algoroadmap.application.dto.OAuthCallbackRequest
 import com.algoroadmap.application.service.AuthService
 import com.algoroadmap.domain.exception.DomainException
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.coroutines.runBlocking
@@ -11,16 +16,23 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication", description = "사용자 인증 관련 API")
 class AuthController(
     private val authService: AuthService
 ) {
     
-    /**
-     * solved.ac OAuth 시작 - 사용자를 solved.ac 인증 페이지로 리디렉션
-     */
+    @Operation(
+        summary = "solved.ac OAuth 인증 시작",
+        description = "사용자를 solved.ac의 OAuth 인증 페이지로 리디렉션시킵니다."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "302", description = "solved.ac 인증 페이지로 리디렉션"),
+        ApiResponse(responseCode = "500", description = "OAuth 설정 오류")
+    )
     @GetMapping("/solvedac")
     fun startSolvedAcAuth(
         response: HttpServletResponse,
+        @Parameter(description = "OAuth state 파라미터") 
         @RequestParam(required = false) state: String?
     ) {
         val authorizationUrl = authService.getAuthorizationUrl(state)

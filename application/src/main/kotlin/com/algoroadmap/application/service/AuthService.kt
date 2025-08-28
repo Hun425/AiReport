@@ -113,6 +113,14 @@ class AuthService(
     }
     
     /**
+     * 사용자 ID로 사용자 정보 조회
+     */
+    fun getUserById(userId: Long): UserResponse? {
+        val user = userRepository.findById(userId) ?: return null
+        return user.toUserResponse()
+    }
+    
+    /**
      * 토큰 유효성 검증
      */
     fun validateToken(token: String): Boolean {
