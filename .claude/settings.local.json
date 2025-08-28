@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rmdir:*)"
+      "Bash(rmdir:*)",
+      "Bash(./gradlew:*)",
+      "Bash(chmod:*)",
+      "Bash(gradle:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,16 +1,17 @@
 package com.algoroadmap.infrastructure.external
 
+import com.algoroadmap.domain.service.OAuthService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
-import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
-@Component
-class SolvedAcOAuthClient(
+@Service
+class SolvedAcOAuthServiceImpl(
     @Qualifier("oauthWebClient") private val webClient: WebClient,
     @Value("\${spring.security.oauth2.client.registration.solved-ac.client-id}")
     private val clientId: String,
@@ -18,12 +19,12 @@ class SolvedAcOAuthClient(
     private val clientSecret: String,
     @Value("\${spring.security.oauth2.client.registration.solved-ac.redirect-uri}")
     private val redirectUri: String
-) {
+) : OAuthService {
     
     /**
      * OAuth 인증 URL 생성
      */
-    fun getAuthorizationUrl(state: String? = null): String {
+    override fun getAuthorizationUrl(state: String?): String {
         val uriBuilder = UriComponentsBuilder
             .fromUriString("https://solved.ac/oauth/authorize")
             .queryParam("client_id", clientId)
@@ -39,7 +40,7 @@ class SolvedAcOAuthClient(
     /**
      * 인증 코드로 액세스 토큰 획득
      */
-    suspend fun exchangeCodeForToken(code: String): SolvedAcTokenResponse {
+    override suspend fun exchangeCodeForToken(code: String): OAuthService.TokenResponse {
         return webClient
             .post()
             .uri("https://solved.ac/oauth/token")
@@ -53,12 +54,21 @@ class SolvedAcOAuthClient(
             )
             .retrieve()
             .awaitBody<SolvedAcTokenResponse>()
+            .let { response ->
+                OAuthService.TokenResponse(
+                    accessToken = response.accessToken,
+                    tokenType = response.tokenType,
+                    expiresIn = response.expiresIn,
+                    refreshToken = response.refreshToken,
+                    scope = response.scope
+                )
+            }
     }
     
     /**
      * 액세스 토큰으로 사용자 정보 조회
      */
-    suspend fun getUserInfo(accessToken: String): SolvedAcUserInfo {
+    override suspend fun getUserInfo(accessToken: String): OAuthService.UserInfo {
         return webClient
             .get()
             .uri("https://solved.ac/api/v3/user/me")
@@ -67,6 +77,17 @@ class SolvedAcOAuthClient(
             }
             .retrieve()
             .awaitBody<SolvedAcUserInfo>()
+            .let { userInfo ->
+                OAuthService.UserInfo(
+                    handle = userInfo.handle,
+                    bio = userInfo.bio,
+                    profileImageUrl = userInfo.profileImageUrl,
+                    solvedCount = userInfo.solvedCount,
+                    tier = userInfo.tier,
+                    rating = userInfo.rating,
+                    rank = userInfo.rank
+                )
+            }
     }
 }
 

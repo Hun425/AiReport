@@ -10,7 +10,7 @@ import com.algoroadmap.domain.repository.UserRepository
 import com.algoroadmap.domain.service.SolvedAcService
 import com.algoroadmap.domain.service.SolvedAcUserData
 import com.algoroadmap.domain.service.TokenService
-import com.algoroadmap.infrastructure.external.SolvedAcOAuthClient
+import com.algoroadmap.domain.service.OAuthService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -21,14 +21,14 @@ class AuthService(
     private val userRepository: UserRepository,
     private val solvedAcService: SolvedAcService,
     private val tokenService: TokenService,
-    private val solvedAcOAuthClient: SolvedAcOAuthClient
+    private val oAuthService: OAuthService
 ) {
     
     /**
      * solved.ac OAuth 인증 URL 생성
      */
     fun getAuthorizationUrl(state: String? = null): String {
-        return solvedAcOAuthClient.getAuthorizationUrl(state)
+        return oAuthService.getAuthorizationUrl(state)
     }
     
     /**
@@ -37,10 +37,10 @@ class AuthService(
     suspend fun handleSolvedAcCallback(request: OAuthCallbackRequest): AuthResult {
         try {
             // 1. 인증 코드로 액세스 토큰 획득
-            val tokenResponse = solvedAcOAuthClient.exchangeCodeForToken(request.code)
+            val tokenResponse = oAuthService.exchangeCodeForToken(request.code)
             
             // 2. 액세스 토큰으로 사용자 정보 조회
-            val userInfo = solvedAcOAuthClient.getUserInfo(tokenResponse.accessToken)
+            val userInfo = oAuthService.getUserInfo(tokenResponse.accessToken)
             
             // 3. solved.ac API에서 상세 사용자 데이터 조회
             val solvedAcUser = solvedAcService.fetchUserData(userInfo.handle)

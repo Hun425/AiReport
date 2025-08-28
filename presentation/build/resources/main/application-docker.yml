@@ -1,0 +1,30 @@
+# Docker 환경 설정
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/algoroadmap
+    username: postgres
+    password: password
+    
+  jpa:
+    hibernate:
+      ddl-auto: update  # Docker 환경에서는 update 사용
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        
+  # Redis 설정 (향후 캐싱용)
+  redis:
+    host: redis
+    port: 6379
+    
+# 로깅 설정
+logging:
+  level:
+    com.algoroadmap: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    
+# 서버 설정
+server:
+  port: 8080
