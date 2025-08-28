@@ -1,6 +1,7 @@
 package com.algoroadmap.infrastructure.external
 
 import com.algoroadmap.domain.service.OAuthService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
@@ -21,6 +22,8 @@ class SolvedAcOAuthServiceImpl(
     private val redirectUri: String
 ) : OAuthService {
     
+    private val logger = LoggerFactory.getLogger(SolvedAcOAuthServiceImpl::class.java)
+    
     /**
      * OAuth 인증 URL 생성
      */
@@ -34,35 +37,43 @@ class SolvedAcOAuthServiceImpl(
         
         state?.let { uriBuilder.queryParam("state", it) }
         
-        return uriBuilder.build().toUriString()
+        val authUrl = uriBuilder.build().toUriString()
+        logger.info("OAuth 인증 URL 생성: clientId=$clientId, redirectUri=$redirectUri")
+        return authUrl
     }
     
     /**
      * 인증 코드로 액세스 토큰 획득
      */
     override suspend fun exchangeCodeForToken(code: String): OAuthService.TokenResponse {
-        return webClient
-            .post()
-            .uri("https://solved.ac/oauth/token")
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .bodyValue(
-                "grant_type=authorization_code" +
-                "&client_id=$clientId" +
-                "&client_secret=$clientSecret" +
-                "&redirect_uri=$redirectUri" +
-                "&code=$code"
-            )
-            .retrieve()
-            .awaitBody<SolvedAcTokenResponse>()
-            .let { response ->
-                OAuthService.TokenResponse(
-                    accessToken = response.accessToken,
-                    tokenType = response.tokenType,
-                    expiresIn = response.expiresIn,
-                    refreshToken = response.refreshToken,
-                    scope = response.scope
+        return try {
+            logger.info("OAuth 토큰 교환 시작: code=${code.take(10)}...")
+            val response = webClient
+                .post()
+                .uri("https://solved.ac/oauth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(
+                    "grant_type=authorization_code" +
+                    "&client_id=$clientId" +
+                    "&client_secret=$clientSecret" +
+                    "&redirect_uri=$redirectUri" +
+                    "&code=$code"
                 )
-            }
+                .retrieve()
+                .awaitBody<SolvedAcTokenResponse>()
+                
+            logger.info("OAuth 토큰 교환 성공: tokenType=${response.tokenType}")
+            OAuthService.TokenResponse(
+                accessToken = response.accessToken,
+                tokenType = response.tokenType,
+                expiresIn = response.expiresIn,
+                refreshToken = response.refreshToken,
+                scope = response.scope
+            )
+        } catch (e: Exception) {
+            logger.error("OAuth 토큰 교환 실패: code=${code.take(10)}...", e)
+            throw e
+        }
     }
     
     /**

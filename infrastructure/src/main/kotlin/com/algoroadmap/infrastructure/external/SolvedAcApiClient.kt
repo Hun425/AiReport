@@ -1,6 +1,7 @@
 package com.algoroadmap.infrastructure.external
 
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
@@ -9,19 +10,23 @@ import org.springframework.web.reactive.function.client.awaitBody
 class SolvedAcApiClient(
     private val solvedAcWebClient: WebClient
 ) {
+    private val logger = LoggerFactory.getLogger(SolvedAcApiClient::class.java)
     
     /**
      * solved.ac API로부터 사용자 정보를 조회
      */
     suspend fun fetchUserData(handle: String): SolvedAcUser? {
         return try {
-            solvedAcWebClient
+            logger.info("solved.ac 사용자 정보 조회 시작: handle=$handle")
+            val user = solvedAcWebClient
                 .get()
                 .uri("/user/show?handle={handle}", handle)
                 .retrieve()
                 .awaitBody<SolvedAcUser>()
+            logger.info("solved.ac 사용자 정보 조회 성공: handle=$handle, solvedCount=${user.solvedCount}")
+            user
         } catch (e: Exception) {
-            // 로깅 추가 필요
+            logger.error("solved.ac 사용자 정보 조회 실패: handle=$handle", e)
             null
         }
     }
@@ -31,14 +36,16 @@ class SolvedAcApiClient(
      */
     suspend fun fetchUserSolvedProblems(handle: String): List<SolvedAcProblem> {
         return try {
-            solvedAcWebClient
+            logger.info("solved.ac 사용자 푼 문제 목록 조회 시작: handle=$handle")
+            val response = solvedAcWebClient
                 .get()
                 .uri("/search/problem?query=solved_by:{handle}&sort=id&direction=asc", handle)
                 .retrieve()
                 .awaitBody<SolvedAcProblemSearchResponse>()
-                .items
+            logger.info("solved.ac 사용자 푼 문제 목록 조회 성공: handle=$handle, count=${response.items.size}")
+            response.items
         } catch (e: Exception) {
-            // 로깅 추가 필요
+            logger.error("solved.ac 사용자 푼 문제 목록 조회 실패: handle=$handle", e)
             emptyList()
         }
     }
