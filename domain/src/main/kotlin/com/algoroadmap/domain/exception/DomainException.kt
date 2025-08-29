@@ -11,4 +11,10 @@ sealed class DomainException(message: String, cause: Throwable? = null) : Runtim
     class DailyReviewLimitExceededException : DomainException("일일 코드 리뷰 한도를 초과했습니다")
     class SyncDataNotAvailableException(message: String) : DomainException(message)
     class OAuthAuthenticationException(message: String, cause: Throwable? = null) : DomainException(message, cause)
+    
+    // 로드맵 관련 예외
+    class ActiveRoadmapAlreadyExistsException : DomainException("이미 활성화된 로드맵이 존재합니다")
+    class UnauthorizedRoadmapAccessException : DomainException("로드맵에 접근할 권한이 없습니다")
+    class InvalidCompanyIdException : DomainException("잘못된 기업 ID입니다")
+    class InvalidDurationException : DomainException("학습 기간은 1-12개월 사이여야 합니다")
 }

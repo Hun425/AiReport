@@ -45,7 +45,16 @@ data class User(
     val createdAt: LocalDateTime = LocalDateTime.now(),
     
     @Column(name = "updated_at")
-    var updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+    
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val roadmaps: List<Roadmap> = emptyList(),
+    
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val solvedProblems: List<UserSolvedProblem> = emptyList(),
+    
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+    val codeReviews: List<CodeReview> = emptyList()
 ) {
     fun getDailyReviewLimit(): Int = when (subscriptionPlan) {
         SubscriptionPlan.FREE -> 10
@@ -58,6 +67,18 @@ data class User(
         dailyReviewUsed = this.dailyReviewUsed + 1,
         updatedAt = LocalDateTime.now()
     )
+    
+    /**
+     * 활성화된 로드맵 조회
+     */
+    fun getActiveRoadmap(): Roadmap? = roadmaps.find { it.isActive }
+    
+    /**
+     * 특정 문제를 해결했는지 확인
+     */
+    fun hasSolvedProblem(problemId: Long): Boolean {
+        return solvedProblems.any { it.problem.id == problemId }
+    }
 }
 
 enum class SubscriptionPlan {
