@@ -25,41 +25,37 @@ class AuthService(
 ) {
     
     /**
-     * solved.ac OAuth 인증 URL 생성
+     * Google OAuth 인증 URL 생성
      */
-    fun getAuthorizationUrl(state: String? = null): String {
-        return oAuthService.getAuthorizationUrl(state)
+    fun getGoogleAuthorizationUrl(state: String? = null): String {
+        return oAuthService.getGoogleAuthorizationUrl(state)
     }
     
     /**
-     * solved.ac OAuth 콜백 처리
+     * Google OAuth 콜백 처리
      */
-    suspend fun handleSolvedAcCallback(request: OAuthCallbackRequest): AuthResult {
+    suspend fun handleGoogleCallback(request: OAuthCallbackRequest): AuthResult {
         try {
             // 1. 인증 코드로 액세스 토큰 획득
-            val tokenResponse = oAuthService.exchangeCodeForToken(request.code)
+            val tokenResponse = oAuthService.exchangeGoogleCodeForToken(request.code)
             
-            // 2. 액세스 토큰으로 사용자 정보 조회
-            val userInfo = oAuthService.getUserInfo(tokenResponse.accessToken)
+            // 2. 액세스 토큰으로 Google 사용자 정보 조회
+            val googleUserInfo = oAuthService.getGoogleUserInfo(tokenResponse.accessToken)
             
-            // 3. solved.ac API에서 상세 사용자 데이터 조회
-            val solvedAcUser = solvedAcService.fetchUserData(userInfo.handle)
-                ?: throw DomainException.UserNotFoundByHandleException(userInfo.handle)
-            
-            // 4. 기존 사용자 확인 또는 새 사용자 생성
-            val existingUser = userRepository.findByHandle(userInfo.handle)
+            // 3. 기존 사용자 확인 또는 새 사용자 생성 (Google ID 기반)
+            val existingUser = userRepository.findByGoogleId(googleUserInfo.sub)
             val isNewUser = existingUser == null
             
             val user = if (existingUser != null) {
                 // 기존 사용자 정보 업데이트
-                updateUserFromSolvedAc(existingUser, solvedAcUser)
+                updateUserFromGoogle(existingUser, googleUserInfo)
             } else {
                 // 새 사용자 생성
-                createUserFromSolvedAc(solvedAcUser)
+                createUserFromGoogle(googleUserInfo)
             }
             
-            // 5. JWT 토큰 생성
-            val accessToken = tokenService.generateToken(user.id, user.solvedAcHandle)
+            // 4. JWT 토큰 생성
+            val accessToken = tokenService.generateToken(user.id, user.email ?: "")
             
             return AuthResult(
                 accessToken = accessToken,
@@ -72,30 +68,30 @@ class AuthService(
         }
     }
     
-    private fun updateUserFromSolvedAc(
+    private fun updateUserFromGoogle(
         existingUser: User, 
-        solvedAcUser: SolvedAcUserData
+        googleUserInfo: OAuthService.GoogleUserInfo
     ): User {
         val updatedUser = existingUser.copy(
-            profileImageUrl = solvedAcUser.profileImageUrl,
-            solvedAcClass = solvedAcUser.solvedAcClass,
-            solvedCount = solvedAcUser.solvedCount,
-            rank = solvedAcUser.rank,
+            email = googleUserInfo.email,
+            profileImageUrl = googleUserInfo.picture,
             updatedAt = LocalDateTime.now()
         )
         
         return userRepository.save(updatedUser)
     }
     
-    private fun createUserFromSolvedAc(
-        solvedAcUser: SolvedAcUserData
+    private fun createUserFromGoogle(
+        googleUserInfo: OAuthService.GoogleUserInfo
     ): User {
         val newUser = User(
-            solvedAcHandle = solvedAcUser.handle,
-            profileImageUrl = solvedAcUser.profileImageUrl,
-            solvedAcClass = solvedAcUser.solvedAcClass,
-            solvedCount = solvedAcUser.solvedCount,
-            rank = solvedAcUser.rank,
+            googleId = googleUserInfo.sub,
+            email = googleUserInfo.email,
+            profileImageUrl = googleUserInfo.picture,
+            solvedAcHandle = "", // 나중에 별도 등록
+            solvedAcClass = 0,
+            solvedCount = 0,
+            rank = 0,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now()
         )
@@ -126,6 +122,31 @@ class AuthService(
     fun validateToken(token: String): Boolean {
         return tokenService.validateToken(token)
     }
+    
+    /**
+     * solved.ac 핸들 등록/수정
+     */
+    suspend fun updateSolvedAcHandle(userId: Long, handle: String) {
+        // 1. solved.ac API로 핸들 유효성 검증
+        val solvedAcUser = solvedAcService.fetchUserData(handle)
+            ?: throw DomainException.UserNotFoundByHandleException(handle)
+        
+        // 2. 사용자 조회
+        val user = userRepository.findById(userId)
+            ?: throw DomainException.UserNotFoundException(userId)
+        
+        // 3. 사용자 정보 업데이트
+        val updatedUser = user.copy(
+            solvedAcHandle = handle,
+            profileImageUrl = solvedAcUser.profileImageUrl,
+            solvedAcClass = solvedAcUser.solvedAcClass,
+            solvedCount = solvedAcUser.solvedCount,
+            rank = solvedAcUser.rank,
+            updatedAt = LocalDateTime.now()
+        )
+        
+        userRepository.save(updatedUser)
+    }
 }
 
 /**
@@ -134,7 +155,8 @@ class AuthService(
 private fun User.toUserResponse(): UserResponse {
     return UserResponse(
         id = this.id,
-        solvedAcHandle = this.solvedAcHandle,
+        email = this.email,
+        solvedAcHandle = this.solvedAcHandle.takeIf { it.isNotEmpty() },
         profileImageUrl = this.profileImageUrl,
         solvedAcClass = this.solvedAcClass,
         solvedCount = this.solvedCount,

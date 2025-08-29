@@ -15,6 +15,8 @@ class UserRepositoryImpl(
     
     override fun findByHandle(handle: String): User? = userJpaRepository.findBySolvedAcHandle(handle)
     
+    override fun findByGoogleId(googleId: String): User? = userJpaRepository.findByGoogleId(googleId)
+    
     override fun existsByHandle(handle: String): Boolean = userJpaRepository.existsBySolvedAcHandle(handle)
     
     override fun isSyncInProgress(userId: Long): Boolean = userJpaRepository.isSyncInProgress(userId)

@@ -70,12 +70,20 @@ algoroadmap-service/
 ## 🔌 API 엔드포인트
 
 ### 인증
-- `GET /api/v1/auth/solvedac` - solved.ac OAuth 시작
-- `GET /api/v1/auth/solvedac/callback` - OAuth 콜백 처리
+- `GET /api/v1/auth/google` - **Google OAuth 시작**
+- `GET /api/v1/auth/google/callback` - **OAuth 콜백 처리**
 - `POST /api/v1/auth/logout` - 로그아웃
 
 ### 사용자
 - `GET /api/v1/users/me` - 내 정보 조회
+- `PUT /api/v1/users/me/handle` - **solved.ac 핸들 등록/수정**
+
+### 데이터 동기화
+- `POST /api/v1/users/me/sync` - solved.ac 데이터 동기화 요청
+- `GET /api/v1/users/me/sync/status` - 동기화 상태 조회
+
+### 대시보드
+- `GET /api/v1/dashboard/me` - 대시보드 데이터 조회
 
 ### 헬스체크
 - `GET /api/v1/health` - API 상태 확인
@@ -109,5 +117,22 @@ algoroadmap-service/
 
 ---
 
-**마지막 업데이트**: 2025-08-27
+**마지막 업데이트**: 2025-08-29 (**Google OAuth 인증 시스템 적용**)  
 **개발자**: 개발팀
+
+## 🎯 **최신 변경사항 (v1.1)**
+
+### ✨ **주요 기능 추가**
+- **Google OAuth 2.0 로그인** 지원
+- **solved.ac 핸들 수동 등록** 시스템
+- **SpringDoc OpenAPI 2.8.0** 업그레이드
+
+### 🔄 **인증 방식 변경**
+1. **이전**: solved.ac 직접 OAuth (API 미지원)
+2. **현재**: Google OAuth → solved.ac 핸들 등록 → 데이터 동기화
+
+### 🚀 **사용자 플로우**
+1. Google 계정으로 로그인
+2. solved.ac 핸들 등록
+3. 자동 데이터 동기화
+4. 개인화된 대시보드 확인

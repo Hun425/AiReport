@@ -10,8 +10,14 @@ data class User(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     
-    @Column(name = "solved_ac_handle", unique = true, nullable = false)
-    val solvedAcHandle: String,
+    @Column(name = "google_id", unique = true)
+    val googleId: String? = null,
+    
+    @Column(name = "email")
+    val email: String? = null,
+    
+    @Column(name = "solved_ac_handle", unique = true)
+    val solvedAcHandle: String = "",
     
     @Column(name = "profile_image_url")
     val profileImageUrl: String? = null,

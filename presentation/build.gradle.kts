@@ -22,8 +22,8 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     
-    // SpringDoc OpenAPI (Swagger)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+    // SpringDoc OpenAPI (Swagger) - Spring Boot 3.4 호환
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
     
     // Development tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")

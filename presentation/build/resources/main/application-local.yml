@@ -4,6 +4,14 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your_google_client_id.apps.googleusercontent.com
+            client-secret: your_google_client_secret
 
 app:
   jwt:

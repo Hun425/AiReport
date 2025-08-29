@@ -1,6 +1,11 @@
-# API 명세서 (v1.1) - 개선된 버전
+# API 명세서 (v1.2) - Google OAuth 적용
 
 이 문서는 AI 알고리즘 학습 로드맵 서비스의 API 엔드포인트를 정의합니다.
+
+**주요 변경사항 (v1.2)**:
+- ✅ Google OAuth 2.0 인증 시스템 도입
+- ✅ solved.ac 핸들 수동 등록 API 추가
+- ✅ 사용자 플로우 개선
 
 **Base URL:** `/api/v1`
 
@@ -46,19 +51,19 @@ X-RateLimit-Reset: 1640995200
 
 ## 1. 인증 (Authentication)
 
-### 1.1. solved.ac OAuth 시작
+### 1.1. Google OAuth 시작
 
-- **Endpoint:** `GET /auth/solvedac`
-- **Description:** 사용자를 solved.ac의 OAuth 인증 페이지로 리디렉션시킵니다.
+- **Endpoint:** `GET /auth/google`
+- **Description:** 사용자를 Google의 OAuth 인증 페이지로 리디렉션시킵니다.
 - **Response:**
-    - `302 Found` (Redirect)
+    - `302 Found` (Redirect to Google)
 - **Error:**
     - `500 Internal Server Error`: OAuth 설정 오류
 
-### 1.2. solved.ac OAuth 콜백 처리
+### 1.2. Google OAuth 콜백 처리
 
-- **Endpoint:** `GET /auth/solvedac/callback`
-- **Description:** solved.ac로부터 인증 코드를 받아 우리 서비스의 JWT(JSON Web Token)를 발급하고 쿠키에 저장합니다. 성공 시 사용자를 온보딩 페이지(`/onboarding`)로 리디렉션합니다.
+- **Endpoint:** `GET /auth/google/callback`
+- **Description:** Google로부터 인증 코드를 받아 우리 서비스의 JWT(JSON Web Token)를 발급하고 쿠키에 저장합니다. 성공 시 사용자를 온보딩 페이지(`/onboarding`)로 리디렉션합니다.
 - **Query Parameters:**
     - `code`: `string` (required) - 인증 코드
 - **Response:**
@@ -78,9 +83,11 @@ X-RateLimit-Reset: 1640995200
 
 ```json
 {
-  "solvedAcHandle": "goddold",
+  "id": 1,
+  "email": "user@gmail.com",
+  "solvedAcHandle": "goddold",  // null if not registered
   "profileImageUrl": "https://...",
-  "class": 5,
+  "solvedAcClass": 5,
   "solvedCount": 350,
   "rank": 12345,
   "lastSyncedAt": "2025-08-27T22:10:00",
@@ -96,7 +103,33 @@ X-RateLimit-Reset: 1640995200
     - `401 Unauthorized`: JWT 토큰 누락 또는 만료
     - `404 Not Found`: 사용자 정보 없음
 
-### 2.2. solved.ac 데이터 동기화 요청
+### 2.2. solved.ac 핸들 등록/수정 (신규)
+
+- **Endpoint:** `PUT /users/me/handle`
+- **Description:** 사용자의 solved.ac 핸들을 등록하거나 수정합니다. 핸들 유효성을 solved.ac 공개 API로 검증합니다.
+- **Headers:** `Authorization: Bearer {jwt_token}`
+- **Request Body:**
+
+```json
+{
+  "handle": "goddold"
+}
+```
+
+- **Response:** `200 OK`
+
+```json
+{
+  "message": "solved.ac 핸들이 성공적으로 등록되었습니다",
+  "handle": "goddold"
+}
+```
+
+- **Error:**
+    - `400 Bad Request`: 유효하지 않은 핸들
+    - `401 Unauthorized`: JWT 토큰 누락 또는 만료
+
+### 2.3. solved.ac 데이터 동기화 요청
 
 - **Endpoint:** `POST /users/me/sync`
 - **Description:** 사용자의 solved.ac 문제 풀이 데이터를 서버에 비동기적으로 동기화하도록 요청합니다.

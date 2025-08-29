@@ -17,11 +17,12 @@ data class AuthResult(
  */
 data class UserResponse(
     val id: Long,
-    val solvedAcHandle: String,
+    val email: String? = null,
+    val solvedAcHandle: String? = null,
     val profileImageUrl: String?,
-    val solvedAcClass: Int,
-    val solvedCount: Int,
-    val rank: Int,
+    val solvedAcClass: Int = 0,
+    val solvedCount: Int = 0,
+    val rank: Int = 0,
     val lastSyncedAt: LocalDateTime?,
     val subscription: SubscriptionInfo
 )
@@ -42,3 +43,11 @@ data class OAuthCallbackRequest(
     val code: String,
     val state: String? = null
 )
+
+/**
+ * solved.ac 핸들 업데이트 요청 DTO
+ */
+data class UpdateSolvedAcHandleRequest(
+    val handle: String
+)
+

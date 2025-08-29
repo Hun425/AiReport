@@ -24,12 +24,13 @@ class SecurityConfig(
                 authz
                     .requestMatchers("/health/**", "/actuator/**").permitAll()
                     .requestMatchers("/auth/**").permitAll() // OAuth 인증 엔드포인트
+                    .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger UI
                     .anyRequest().authenticated()
             }
             .oauth2Login { oauth2 ->
                 oauth2
-                    .loginPage("/auth/solvedac")
-                    .defaultSuccessUrl("/onboarding")
+                    .loginPage("/auth/google")
+                    .defaultSuccessUrl("/onboarding", true)
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .build()

@@ -19,22 +19,17 @@ spring:
         format_sql: true
     show-sql: ${SHOW_SQL:true}
   
-  # OAuth2 설정 (추후 구현)
+  # OAuth2 설정 - Google OAuth
   security:
     oauth2:
       client:
         registration:
-          solved-ac:
-            client-id: ${SOLVED_AC_CLIENT_ID:}
-            client-secret: ${SOLVED_AC_CLIENT_SECRET:}
-            scope: read
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: openid,profile,email
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/api/v1/auth/solvedac/callback"
-        provider:
-          solved-ac:
-            authorization-uri: https://solved.ac/oauth/authorize
-            token-uri: https://solved.ac/oauth/token
-            user-info-uri: https://solved.ac/api/v3/user/me
+            redirect-uri: "{baseUrl}/auth/google/callback"
 
 # 애플리케이션 설정
 app:

@@ -22,28 +22,28 @@ class AuthController(
 ) {
     
     @Operation(
-        summary = "solved.ac OAuth 인증 시작",
-        description = "사용자를 solved.ac의 OAuth 인증 페이지로 리디렉션시킵니다."
+        summary = "Google OAuth 인증 시작",
+        description = "사용자를 Google의 OAuth 인증 페이지로 리디렉션시킵니다."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "302", description = "solved.ac 인증 페이지로 리디렉션"),
+        ApiResponse(responseCode = "302", description = "Google 인증 페이지로 리디렉션"),
         ApiResponse(responseCode = "500", description = "OAuth 설정 오류")
     )
-    @GetMapping("/solvedac")
-    fun startSolvedAcAuth(
+    @GetMapping("/google")
+    fun startGoogleAuth(
         response: HttpServletResponse,
         @Parameter(description = "OAuth state 파라미터") 
         @RequestParam(required = false) state: String?
     ) {
-        val authorizationUrl = authService.getAuthorizationUrl(state)
+        val authorizationUrl = authService.getGoogleAuthorizationUrl(state)
         response.sendRedirect(authorizationUrl)
     }
     
     /**
-     * solved.ac OAuth 콜백 처리
+     * Google OAuth 콜백 처리
      */
-    @GetMapping("/solvedac/callback")
-    fun handleSolvedAcCallback(
+    @GetMapping("/google/callback")
+    fun handleGoogleCallback(
         @RequestParam code: String,
         @RequestParam(required = false) state: String?,
         response: HttpServletResponse
@@ -54,7 +54,7 @@ class AuthController(
             
             // 비동기 처리를 동기적으로 실행 (Controller에서는 runBlocking 사용)
             val authResult = runBlocking { 
-                authService.handleSolvedAcCallback(callbackRequest) 
+                authService.handleGoogleCallback(callbackRequest) 
             }
             
             // JWT 토큰을 HttpOnly 쿠키로 설정
