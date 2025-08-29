@@ -57,17 +57,9 @@ class AuthController(
                 authService.handleGoogleCallback(callbackRequest) 
             }
             
-            // JWT 토큰을 HttpOnly 쿠키로 설정
-            val jwtCookie = Cookie("accessToken", authResult.accessToken).apply {
-                isHttpOnly = true
-                secure = false // 개발환경에서는 false, 운영환경에서는 true
-                path = "/"
-                maxAge = 3600 // 1시간
-            }
-            response.addCookie(jwtCookie)
-            
-            // 온보딩 페이지로 리디렉션
-            response.sendRedirect("/onboarding")
+            // JWT 토큰을 URL 파라미터로 전달하여 프론트엔드로 리디렉션
+            val redirectUrl = "http://localhost:3000/dashboard?token=${authResult.accessToken}"
+            response.sendRedirect(redirectUrl)
             
             val successResponse = mapOf(
                 "message" to "OAuth 인증이 완료되었습니다",

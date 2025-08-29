@@ -145,14 +145,13 @@ class UserSyncServiceImpl(
         val latestUserData = solvedAcService.fetchUserData(user.solvedAcHandle)
         
         if (latestUserData != null) {
-            val updatedUser = user.copy(
-                profileImageUrl = latestUserData.profileImageUrl,
-                solvedAcClass = latestUserData.solvedAcClass,
-                solvedCount = latestUserData.solvedCount,
-                rank = latestUserData.rank,
-                updatedAt = LocalDateTime.now()
-            )
-            userRepository.save(updatedUser)
+            user.profileImageUrl = latestUserData.profileImageUrl
+            user.solvedAcClass = latestUserData.solvedAcClass
+            user.solvedCount = latestUserData.solvedCount
+            user.rank = latestUserData.rank
+            user.updatedAt = LocalDateTime.now()
+            
+            userRepository.save(user)
         }
     }
     
@@ -194,7 +193,7 @@ class UserSyncServiceImpl(
             id = problemData.problemId,
             title = problemData.title,
             difficulty = problemData.difficulty,
-            tags = problemData.tags.toSet()
+            tags = problemData.tags.toMutableSet()
         )
         
         return problemRepository.save(newProblem)

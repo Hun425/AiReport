@@ -72,13 +72,11 @@ class AuthService(
         existingUser: User, 
         googleUserInfo: OAuthService.GoogleUserInfo
     ): User {
-        val updatedUser = existingUser.copy(
-            email = googleUserInfo.email,
-            profileImageUrl = googleUserInfo.picture,
-            updatedAt = LocalDateTime.now()
-        )
+        existingUser.email = googleUserInfo.email
+        existingUser.profileImageUrl = googleUserInfo.picture
+        existingUser.updatedAt = LocalDateTime.now()
         
-        return userRepository.save(updatedUser)
+        return userRepository.save(existingUser)
     }
     
     private fun createUserFromGoogle(
@@ -136,16 +134,14 @@ class AuthService(
             ?: throw DomainException.UserNotFoundException(userId)
         
         // 3. 사용자 정보 업데이트
-        val updatedUser = user.copy(
-            solvedAcHandle = handle,
-            profileImageUrl = solvedAcUser.profileImageUrl,
-            solvedAcClass = solvedAcUser.solvedAcClass,
-            solvedCount = solvedAcUser.solvedCount,
-            rank = solvedAcUser.rank,
-            updatedAt = LocalDateTime.now()
-        )
+        user.solvedAcHandle = handle
+        user.profileImageUrl = solvedAcUser.profileImageUrl
+        user.solvedAcClass = solvedAcUser.solvedAcClass
+        user.solvedCount = solvedAcUser.solvedCount
+        user.rank = solvedAcUser.rank
+        user.updatedAt = LocalDateTime.now()
         
-        userRepository.save(updatedUser)
+        userRepository.save(user)
     }
 }
 

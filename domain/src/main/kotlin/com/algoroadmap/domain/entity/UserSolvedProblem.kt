@@ -5,34 +5,62 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "user_solved_problems")
-data class UserSolvedProblem(
+class UserSolvedProblem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    val user: User,
+    lateinit var user: User
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "problem_id", nullable = false)
-    val problem: Problem,
+    lateinit var problem: Problem
     
     @Column(name = "solved_at")
-    val solvedAt: LocalDateTime,
+    var solvedAt: LocalDateTime = LocalDateTime.now()
     
     @Column(name = "language")
-    val language: String? = null, // "Kotlin", "Java", "Python" 등
+    var language: String? = null // "Kotlin", "Java", "Python" 등
     
     @Column(name = "memory_kb")
-    val memoryKb: Int? = null,
+    var memoryKb: Int? = null
     
     @Column(name = "time_ms")
-    val timeMs: Int? = null
-) {
-    // 복합 유니크 제약조건을 위한 초기화 블록
-    init {
-        // JPA에서는 @Table(uniqueConstraints = [...])로 처리하는 것이 더 좋지만
-        // 여기서는 비즈니스 로직으로 표현
+    var timeMs: Int? = null
+    
+    // JPA용 기본 생성자
+    constructor()
+    
+    // 편의 생성자
+    constructor(
+        user: User,
+        problem: Problem,
+        solvedAt: LocalDateTime = LocalDateTime.now(),
+        language: String? = null,
+        memoryKb: Int? = null,
+        timeMs: Int? = null
+    ) : this() {
+        this.user = user
+        this.problem = problem
+        this.solvedAt = solvedAt
+        this.language = language
+        this.memoryKb = memoryKb
+        this.timeMs = timeMs
+    }
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is UserSolvedProblem) return false
+        return id == other.id
+    }
+    
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+    
+    override fun toString(): String {
+        return "UserSolvedProblem(id=$id, userId=${if(::user.isInitialized) user.id else "uninitialized"}, problemId=${if(::problem.isInitialized) problem.id else "uninitialized"})"
     }
 }

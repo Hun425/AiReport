@@ -13,11 +13,11 @@ import org.springframework.web.util.UriComponentsBuilder
 @Service
 class GoogleOAuthServiceImpl(
     @Qualifier("oauthWebClient") private val webClient: WebClient,
-    @Value("\${spring.security.oauth2.client.registration.google.client-id}")
+    @param:Value("\${spring.security.oauth2.client.registration.google.client-id}")
     private val clientId: String,
-    @Value("\${spring.security.oauth2.client.registration.google.client-secret}")
+    @param:Value("\${spring.security.oauth2.client.registration.google.client-secret}")
     private val clientSecret: String,
-    @Value("\${spring.security.oauth2.client.registration.google.redirect-uri}")
+    @param:Value("\${spring.security.oauth2.client.registration.google.redirect-uri}")
     private val redirectUri: String
 ) : OAuthService {
     

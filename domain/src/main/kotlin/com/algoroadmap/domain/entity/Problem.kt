@@ -4,20 +4,37 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "problems")
-data class Problem(
+class Problem(
     @Id
-    val id: Long, // BOJ 문제 번호를 직접 사용
+    var id: Long = 0, // BOJ 문제 번호를 직접 사용
     
     @Column(name = "title", nullable = false)
-    val title: String,
+    var title: String = "",
     
     @Column(name = "difficulty")
-    val difficulty: String? = null, // "Bronze 5", "Silver 3", "Gold 2" 등
+    var difficulty: String? = null, // "Bronze 5", "Silver 3", "Gold 2" 등
     
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "problem_tags", joinColumns = [JoinColumn(name = "problem_id")])
     @Column(name = "tag")
-    val tags: Set<String> = emptySet() // "DP", "그래프 탐색", "구현" 등
+    var tags: MutableSet<String> = mutableSetOf() // "DP", "그래프 탐색", "구현" 등
 ) {
+    // JPA용 기본 생성자
+    constructor() : this(0, "", null, mutableSetOf())
+    
     fun getBojUrl(): String = "https://www.acmicpc.net/problem/$id"
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Problem) return false
+        return id == other.id
+    }
+    
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+    
+    override fun toString(): String {
+        return "Problem(id=$id, title='$title', difficulty=$difficulty)"
+    }
 }

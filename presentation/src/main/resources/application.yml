@@ -29,7 +29,7 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET:}
             scope: openid,profile,email
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/auth/google/callback"
+            redirect-uri: "http://localhost:8080/api/v1/auth/google/callback"
 
 # 애플리케이션 설정
 app:

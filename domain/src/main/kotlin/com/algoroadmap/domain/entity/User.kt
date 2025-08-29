@@ -5,57 +5,76 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "users")
-data class User(
+class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0,
     
     @Column(name = "google_id", unique = true)
-    val googleId: String? = null,
+    var googleId: String? = null,
     
     @Column(name = "email")
-    val email: String? = null,
+    var email: String? = null,
     
     @Column(name = "solved_ac_handle", unique = true)
-    val solvedAcHandle: String = "",
+    var solvedAcHandle: String = "",
     
     @Column(name = "profile_image_url")
-    val profileImageUrl: String? = null,
+    var profileImageUrl: String? = null,
     
     @Column(name = "solved_ac_class")
-    val solvedAcClass: Int = 0,
+    var solvedAcClass: Int = 0,
     
     @Column(name = "solved_count")
-    val solvedCount: Int = 0,
+    var solvedCount: Int = 0,
     
     @Column(name = "rank")
-    val rank: Int = 0,
+    var rank: Int = 0,
     
     @Column(name = "last_synced_at")
-    val lastSyncedAt: LocalDateTime? = null,
+    var lastSyncedAt: LocalDateTime? = null,
     
     @Enumerated(EnumType.STRING)
     @Column(name = "subscription_plan")
-    val subscriptionPlan: SubscriptionPlan = SubscriptionPlan.FREE,
+    var subscriptionPlan: SubscriptionPlan = SubscriptionPlan.FREE,
     
     @Column(name = "daily_review_used")
-    val dailyReviewUsed: Int = 0,
+    var dailyReviewUsed: Int = 0,
     
     @Column(name = "created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    var createdAt: LocalDateTime = LocalDateTime.now(),
     
     @Column(name = "updated_at")
     var updatedAt: LocalDateTime = LocalDateTime.now(),
     
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val roadmaps: List<Roadmap> = emptyList(),
+    var roadmaps: MutableList<Roadmap> = mutableListOf(),
     
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val solvedProblems: List<UserSolvedProblem> = emptyList(),
+    var solvedProblems: MutableList<UserSolvedProblem> = mutableListOf(),
     
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
-    val codeReviews: List<CodeReview> = emptyList()
+    var codeReviews: MutableList<CodeReview> = mutableListOf()
 ) {
+    // JPA용 기본 생성자
+    constructor() : this(
+        id = 0,
+        googleId = null,
+        email = null,
+        solvedAcHandle = "",
+        profileImageUrl = null,
+        solvedAcClass = 0,
+        solvedCount = 0,
+        rank = 0,
+        lastSyncedAt = null,
+        subscriptionPlan = SubscriptionPlan.FREE,
+        dailyReviewUsed = 0,
+        createdAt = LocalDateTime.now(),
+        updatedAt = LocalDateTime.now(),
+        roadmaps = mutableListOf(),
+        solvedProblems = mutableListOf(),
+        codeReviews = mutableListOf()
+    )
     fun getDailyReviewLimit(): Int = when (subscriptionPlan) {
         SubscriptionPlan.FREE -> 10
         SubscriptionPlan.PREMIUM -> 100
@@ -63,10 +82,10 @@ data class User(
     
     fun canRequestReview(): Boolean = dailyReviewUsed < getDailyReviewLimit()
     
-    fun incrementDailyReviewUsed(): User = this.copy(
-        dailyReviewUsed = this.dailyReviewUsed + 1,
-        updatedAt = LocalDateTime.now()
-    )
+    fun incrementDailyReviewUsed() {
+        this.dailyReviewUsed = this.dailyReviewUsed + 1
+        this.updatedAt = LocalDateTime.now()
+    }
     
     /**
      * 활성화된 로드맵 조회
@@ -77,7 +96,27 @@ data class User(
      * 특정 문제를 해결했는지 확인
      */
     fun hasSolvedProblem(problemId: Long): Boolean {
-        return solvedProblems.any { it.problem.id == problemId }
+        return solvedProblems.any { solvedProblem ->
+            try {
+                solvedProblem.problem.id == problemId
+            } catch (_: UninitializedPropertyAccessException) {
+                false
+            }
+        }
+    }
+    
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is User) return false
+        return id == other.id
+    }
+    
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+    
+    override fun toString(): String {
+        return "User(id=$id, email=$email, solvedAcHandle='$solvedAcHandle')"
     }
 }
 
