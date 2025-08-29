@@ -5,11 +5,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 초기 회사 데이터 삽입
 INSERT INTO companies (name, logo_url, description) VALUES
-('카카오', 'https://example.com/kakao-logo.png', '카카오 코딩테스트 대비'),
-('네이버', 'https://example.com/naver-logo.png', '네이버 코딩테스트 대비'),
-('라인', 'https://example.com/line-logo.png', '라인 코딩테스트 대비'),
-('삼성전자', 'https://example.com/samsung-logo.png', '삼성전자 SW역량테스트 대비'),
-('LG전자', 'https://example.com/lg-logo.png', 'LG전자 코딩테스트 대비')
+('카카오', NULL, '카카오 코딩테스트 대비 - DP, 그래프 탐색, 구현 중심'),
+('네이버', NULL, '네이버 코딩테스트 대비 - 구현, 문자열, 자료구조 중심'),
+('라인', NULL, '라인 코딩테스트 대비 - 그래프 탐색, DP 중심'),
+('삼성전자', NULL, '삼성전자 SW역량테스트 대비 - 시뮬레이션, 백트래킹 중심'),
+('LG전자', NULL, 'LG전자 코딩테스트 대비 - 구현, DP 중심'),
+('토스', NULL, '토스 코딩테스트 대비 - 알고리즘 구현, 시스템 설계'),
+('우아한형제들', NULL, '우아한형제들 코딩테스트 대비 - 구현, 자료구조'),
+('쿠팡', NULL, '쿠팡 코딩테스트 대비 - 알고리즘, 자료구조'),
+('NHN', NULL, 'NHN 코딩테스트 대비 - 구현, 문자열, DP'),
+('SK', NULL, 'SK 코딩테스트 대비 - 종합 알고리즘 역량')
 ON CONFLICT DO NOTHING;
 
 -- 회사별 프로필 태그 데이터 삽입
@@ -37,7 +42,29 @@ INSERT INTO company_profile_tags (company_id, tag_name, weight) VALUES
 -- LG전자
 (5, '구현', 2),
 (5, 'DP', 2),
-(5, '그래프 탐색', 2)
+(5, '그래프 탐색', 2),
+-- 토스
+(6, '구현', 3),
+(6, '자료구조', 3),
+(6, 'DP', 2),
+(6, '그리디', 2),
+-- 우아한형제들
+(7, '구현', 3),
+(7, '자료구조', 2),
+(7, '문자열', 2),
+-- 쿠팡
+(8, '자료구조', 3),
+(8, '그래프 탐색', 2),
+(8, '구현', 2),
+-- NHN
+(9, '구현', 2),
+(9, '문자열', 2),
+(9, 'DP', 2),
+-- SK
+(10, '구현', 2),
+(10, 'DP', 2),
+(10, '그래프 탐색', 2),
+(10, '자료구조', 2)
 ON CONFLICT DO NOTHING;
 
 -- 인덱스 생성 (성능 최적화)
