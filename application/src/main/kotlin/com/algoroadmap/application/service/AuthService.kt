@@ -11,6 +11,7 @@ import com.algoroadmap.domain.service.SolvedAcService
 import com.algoroadmap.domain.service.SolvedAcUserData
 import com.algoroadmap.domain.service.TokenService
 import com.algoroadmap.domain.service.OAuthService
+
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -23,6 +24,7 @@ class AuthService(
     private val tokenService: TokenService,
     private val oAuthService: OAuthService
 ) {
+
     
     /**
      * Google OAuth 인증 URL 생성
@@ -56,6 +58,7 @@ class AuthService(
             
             // 4. JWT 토큰 생성
             val accessToken = tokenService.generateToken(user.id, user.email ?: "")
+
             
             return AuthResult(
                 accessToken = accessToken,

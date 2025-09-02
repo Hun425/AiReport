@@ -23,7 +23,7 @@ public class SolvedAcApiClient {
     }
     
     /**
-     * 사용자가 푼 문제 목록 조회
+     * 사용자가 푼 문제 목록 조회 (페이징 처리로 모든 문제 가져오기)
      */
     @org.jetbrains.annotations.Nullable()
     public java.lang.Object fetchUserSolvedProblems(@org.jetbrains.annotations.NotNull()
