@@ -10,9 +10,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const refreshUser = useAuthStore((state) => state.refreshUser);
 
   useEffect(() => {
-    // 앱 시작 시 사용자 정보 새로고침
+    // 앱 시작 시 사용자 정보 확인 (쿠키 기반)
     refreshUser().catch(() => {
       // 인증되지 않은 사용자는 무시
+      console.debug('User not authenticated');
     });
   }, [refreshUser]);
 

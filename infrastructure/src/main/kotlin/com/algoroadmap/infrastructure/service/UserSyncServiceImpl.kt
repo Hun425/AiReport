@@ -102,6 +102,7 @@ class UserSyncServiceImpl(
             // 2단계: 풀어온 문제 목록 조회
             updateSyncStatus(userId, 40, "풀어온 문제 목록을 조회하는 중...")
             val solvedProblems = solvedAcService.fetchUserSolvedProblems(user.solvedAcHandle)
+            logger.info("조회된 문제 수: ${solvedProblems.size}개")
             
             // 3단계: 데이터베이스에 저장
             updateSyncStatus(userId, 70, "문제 데이터를 저장하는 중...")

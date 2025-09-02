@@ -47,9 +47,9 @@ class AuthController(
         @RequestParam code: String,
         @RequestParam(required = false) state: String?,
         response: HttpServletResponse
-    ): ResponseEntity<Map<String, Any>> {
+    ) {
         
-        return try {
+        try {
             val callbackRequest = OAuthCallbackRequest(code, state)
             
             // 비동기 처리를 동기적으로 실행 (Controller에서는 runBlocking 사용)
@@ -57,47 +57,34 @@ class AuthController(
                 authService.handleGoogleCallback(callbackRequest) 
             }
             
-            // JWT 토큰을 URL 파라미터로 전달하여 프론트엔드로 리디렉션
-            val redirectUrl = "http://localhost:3000/dashboard?token=${authResult.accessToken}"
+            // JWT 토큰을 HttpOnly 쿠키로 설정
+            val tokenCookie = Cookie("accessToken", authResult.accessToken).apply {
+                isHttpOnly = true
+                secure = false // 로컬 개발환경에서는 false, 운영환경에서는 true
+                path = "/"
+                maxAge = 3600 // 1시간
+            }
+            response.addCookie(tokenCookie)
+            
+            // 프론트엔드로 리디렉션 (토큰 없이)
+            val redirectUrl = "http://localhost:3000/dashboard"
+            println("리디렉션 URL: $redirectUrl")
             response.sendRedirect(redirectUrl)
             
-            val successResponse = mapOf(
-                "message" to "OAuth 인증이 완료되었습니다",
-                "user" to authResult.user,
-                "isNewUser" to authResult.isNewUser
-            )
-            
-            ResponseEntity.ok(successResponse)
-            
         } catch (e: DomainException.OAuthAuthenticationException) {
-            val errorResponse = mapOf(
-                "error" to mapOf(
-                    "code" to "OAUTH_AUTHENTICATION_FAILED",
-                    "message" to "OAuth 인증에 실패했습니다",
-                    "details" to e.message
-                )
-            )
-            ResponseEntity.badRequest().body(errorResponse)
+            // 에러 페이지로 리디렉션 (에러 메시지와 함께)
+            val errorUrl = "http://localhost:3000/?error=oauth_failed&message=${e.message}"
+            response.sendRedirect(errorUrl)
             
         } catch (e: DomainException) {
-            val errorResponse = mapOf(
-                "error" to mapOf(
-                    "code" to e::class.simpleName,
-                    "message" to e.message,
-                    "details" to "OAuth 인증 처리 중 오류가 발생했습니다"
-                )
-            )
-            ResponseEntity.badRequest().body(errorResponse)
+            // 에러 페이지로 리디렉션
+            val errorUrl = "http://localhost:3000/?error=auth_error&message=${e.message}"
+            response.sendRedirect(errorUrl)
             
         } catch (e: Exception) {
-            val errorResponse = mapOf(
-                "error" to mapOf(
-                    "code" to "OAUTH_ERROR",
-                    "message" to "OAuth 인증 중 오류가 발생했습니다",
-                    "details" to (e.message ?: "Unknown error")
-                )
-            )
-            ResponseEntity.internalServerError().body(errorResponse)
+            // 에러 페이지로 리디렉션
+            val errorUrl = "http://localhost:3000/?error=unknown&message=인증 중 오류가 발생했습니다"
+            response.sendRedirect(errorUrl)
         }
     }
     

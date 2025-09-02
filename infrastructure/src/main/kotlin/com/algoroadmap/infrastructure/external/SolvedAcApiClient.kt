@@ -32,18 +32,42 @@ class SolvedAcApiClient(
     }
     
     /**
-     * 사용자가 푼 문제 목록 조회
+     * 사용자가 푼 문제 목록 조회 (페이징 처리로 모든 문제 가져오기)
      */
     suspend fun fetchUserSolvedProblems(handle: String): List<SolvedAcProblem> {
         return try {
             logger.info("solved.ac 사용자 푼 문제 목록 조회 시작: handle=$handle")
-            val response = solvedAcWebClient
-                .get()
-                .uri("/search/problem?query=solved_by:{handle}&sort=id&direction=asc", handle)
-                .retrieve()
-                .awaitBody<SolvedAcProblemSearchResponse>()
-            logger.info("solved.ac 사용자 푼 문제 목록 조회 성공: handle=$handle, count=${response.items.size}")
-            response.items
+            
+            val allProblems = mutableListOf<SolvedAcProblem>()
+            var page = 1
+            val countPerPage = 100  // 최대 100개씩 가져오기
+            var hasMorePages = true
+            
+            while (hasMorePages) {
+                logger.debug("페이지 ${page} 조회 중: handle=$handle")
+                
+                val response = solvedAcWebClient
+                    .get()
+                    .uri("/search/problem?query=solved_by:{handle}&sort=id&direction=asc&page={page}&count={count}", 
+                         handle, page, countPerPage)
+                    .retrieve()
+                    .awaitBody<SolvedAcProblemSearchResponse>()
+                
+                allProblems.addAll(response.items)
+                
+                // 가져온 항목이 요청한 count보다 적으면 마지막 페이지
+                hasMorePages = response.items.size >= countPerPage
+                page++
+                
+                logger.debug("페이지 ${page - 1} 완료: 이번 페이지 ${response.items.size}개, 총 누적 ${allProblems.size}개")
+                
+                // API 과부하 방지를 위한 잠시 대기 (선택사항)
+                kotlinx.coroutines.delay(100)
+            }
+            
+            logger.info("solved.ac 사용자 푼 문제 목록 조회 성공: handle=$handle, 총 문제 수=${allProblems.size}")
+            allProblems
+            
         } catch (e: Exception) {
             logger.error("solved.ac 사용자 푼 문제 목록 조회 실패: handle=$handle", e)
             emptyList()

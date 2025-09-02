@@ -1,20 +1,44 @@
 'use client';
 
 import { useAuthStore } from '@/stores/auth';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { BookOpen, Target, Brain, TrendingUp } from 'lucide-react';
 
 export default function Home() {
   const { isAuthenticated, isLoading, login } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return; // 클라이언트 사이드에서만 실행
+
+    // OAuth 에러 처리
+    const error = searchParams.get('error');
+    const message = searchParams.get('message');
+    if (error && message) {
+      // URL에서 에러 파라미터 제거
+      const url = new URL(window.location.href);
+      url.searchParams.delete('error');
+      url.searchParams.delete('message');
+      window.history.replaceState({}, '', url.toString());
+      
+      // 에러 메시지 표시
+      alert(`로그인 오류: ${decodeURIComponent(message)}`);
+      return;
+    }
+
+    // 인증된 상태라면 대시보드로 이동
     if (isAuthenticated && !isLoading) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [mounted, router, searchParams, isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (

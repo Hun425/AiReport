@@ -15,20 +15,12 @@ export default function Dashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // 인증 확인
   useEffect(() => {
-    // URL에서 토큰 파라미터 확인 (OAuth 콜백 처리)
-    const token = searchParams.get('token');
-    if (token) {
-      // 토큰을 localStorage에 저장
-      localStorage.setItem('accessToken', token);
-      // URL에서 토큰 파라미터 제거
-      const url = new URL(window.location.href);
-      url.searchParams.delete('token');
-      window.history.replaceState({}, '', url.toString());
-      // 사용자 정보 새로고침
+    if (!authLoading && !isAuthenticated) {
       refreshUser();
     }
-  }, [searchParams, refreshUser]);
+  }, [authLoading, isAuthenticated, refreshUser]);
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: queryKeys.dashboard.me,

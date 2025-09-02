@@ -28,11 +28,7 @@ class ApiClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
-        // localStorage에서 JWT 토큰을 가져와서 Authorization 헤더에 추가
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        // 쿠키는 자동으로 전송되므로 별도 처리 불필요
         return config;
       },
       (error) => Promise.reject(error)
@@ -43,8 +39,12 @@ class ApiClient {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // 인증 에러 처리
-          window.location.href = '/auth/login';
+          // 인증 토큰 제거
+          localStorage.removeItem('accessToken');
+          // 메인 페이지가 아닌 경우에만 리디렉션
+          if (window.location.pathname !== '/') {
+            window.location.href = '/';
+          }
         }
         return Promise.reject(error);
       }
