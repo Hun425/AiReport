@@ -18,13 +18,15 @@ class DashboardServiceImpl(
     
     override fun getUserTagAnalysis(userId: Long): Map<String, TagAnalysisResult> {
         // 사용자가 푼 문제의 태그별 개수 조회
-        val userTagCounts = userSolvedProblemRepository.findTagAnalysByUserId(userId)
+        val rawUserTagCounts = userSolvedProblemRepository.findTagAnalysByUserId(userId)
         
-        // 각 태그별로 TagAnalysisResult 생성
-        // TODO: 전체 문제 수는 나중에 문제 데이터가 더 많아지면 실제 계산하도록 개선
+        // 태그 매핑 및 그룹핑 처리
+        val processedTagCounts = processTagsForDisplay(rawUserTagCounts)
+        
+        // 주요 태그별 전체 문제 수 (실제 데이터 기반으로 추후 개선)
         val tagTotalProblems = mapOf(
             "DP" to 100,
-            "그래프 탐색" to 100,
+            "그래프 탐색" to 100, 
             "구현" to 120,
             "그리디" to 60,
             "문자열" to 80,
@@ -32,16 +34,71 @@ class DashboardServiceImpl(
             "정렬" to 40,
             "이분탐색" to 50,
             "브루트포스" to 70,
-            "자료구조" to 85
+            "자료구조" to 85,
+            "시뮬레이션" to 45,
+            "기타" to 200 // 기타 카테고리는 큰 값으로 설정
         )
         
-        return userTagCounts.mapValues { (tag, solvedCount) ->
-            val totalInTag = tagTotalProblems[tag] ?: 100 // 기본값
+        return processedTagCounts.mapValues { (tag, solvedCount) ->
+            val totalInTag = tagTotalProblems[tag] ?: 50 // 기본값
             TagAnalysisResult(
                 tag = tag,
                 solvedCount = solvedCount,
                 totalProblemsInTag = totalInTag
             )
+        }
+    }
+    
+    /**
+     * 원형 그래프 표시용 태그 처리
+     * - 상위 8개 태그만 표시
+     * - 나머지는 "기타"로 그룹핑
+     * - 코딩테스트 주요 태그로 매핑
+     */
+    private fun processTagsForDisplay(rawTagCounts: Map<String, Int>, maxDisplayTags: Int = 8): Map<String, Int> {
+        // 1단계: 태그 정규화 (solved.ac 태그 → 표시용 태그 매핑)
+        val normalizedTags = mutableMapOf<String, Int>()
+        
+        rawTagCounts.forEach { (originalTag, count) ->
+            val mappedTag = mapToDisplayTag(originalTag)
+            normalizedTags[mappedTag] = (normalizedTags[mappedTag] ?: 0) + count
+        }
+        
+        // 2단계: 상위 N개 선택 (푼 문제 수 기준)
+        val sortedTags = normalizedTags.toList().sortedByDescending { it.second }
+        val topTags = sortedTags.take(maxDisplayTags).toMap().toMutableMap()
+        
+        // 3단계: 나머지 태그들을 "기타"로 통합
+        val remainingTags = sortedTags.drop(maxDisplayTags)
+        if (remainingTags.isNotEmpty()) {
+            val otherCount = remainingTags.sumOf { it.second }
+            topTags["기타"] = otherCount
+        }
+        
+        return topTags
+    }
+    
+    /**
+     * solved.ac 태그를 표시용 태그로 매핑
+     */
+    private fun mapToDisplayTag(originalTag: String): String {
+        return when (originalTag.lowercase()) {
+            "dp", "dynamic_programming", "다이나믹 프로그래밍" -> "DP"
+            "graphs", "graph_traversal", "그래프 이론", "그래프 탐색", "dfs", "bfs" -> "그래프 탐색"
+            "implementation", "구현", "시뮬레이션", "simulation" -> "구현"
+            "greedy", "그리디 알고리즘", "그리디" -> "그리디"
+            "string", "strings", "문자열" -> "문자열"
+            "math", "mathematics", "number_theory", "수학", "정수론" -> "수학"
+            "sorting", "정렬" -> "정렬"
+            "binary_search", "이분 탐색", "이분탐색" -> "이분탐색"
+            "brute_force", "bruteforcing", "브루트포스" -> "브루트포스"
+            "data_structures", "자료 구조", "자료구조" -> "자료구조"
+            "tree", "trees", "트리" -> "트리"
+            "prefix_sum", "누적 합", "누적합" -> "누적합"
+            "two_pointer", "투 포인터", "투포인터" -> "투 포인터"
+            "backtracking", "백트래킹" -> "백트래킹"
+            "combinatorics", "조합론" -> "조합론"
+            else -> originalTag // 매핑되지 않는 태그는 원본 유지
         }
     }
     
