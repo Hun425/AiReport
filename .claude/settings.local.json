@@ -5,7 +5,8 @@
       "Bash(./gradlew:*)",
       "Bash(chmod:*)",
       "Bash(gradle:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

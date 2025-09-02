@@ -40,11 +40,13 @@ class SolvedAcApiClient(
             
             val allProblems = mutableListOf<SolvedAcProblem>()
             var page = 1
-            val countPerPage = 100  // 최대 100개씩 가져오기
+            val countPerPage = 50  // solved.ac API 실제 제한에 맞게 50으로 설정
             var hasMorePages = true
+            var consecutiveEmptyPages = 0
+            val maxConsecutiveEmpty = 3  // 연속 빈 페이지 최대 허용 수
             
-            while (hasMorePages) {
-                logger.debug("페이지 ${page} 조회 중: handle=$handle")
+            while (hasMorePages && consecutiveEmptyPages < maxConsecutiveEmpty) {
+                logger.info("페이지 ${page} 조회 중: handle=$handle")
                 
                 val response = solvedAcWebClient
                     .get()
@@ -53,23 +55,65 @@ class SolvedAcApiClient(
                     .retrieve()
                     .awaitBody<SolvedAcProblemSearchResponse>()
                 
-                allProblems.addAll(response.items)
+                logger.info("API 응답 정보 - 페이지: $page, response.count: ${response.count}, items.size: ${response.items.size}")
                 
-                // 가져온 항목이 요청한 count보다 적으면 마지막 페이지
-                hasMorePages = response.items.size >= countPerPage
+                if (response.items.isEmpty()) {
+                    consecutiveEmptyPages++
+                    logger.warn("빈 페이지 발견: $page (연속 빈 페이지: $consecutiveEmptyPages)")
+                } else {
+                    consecutiveEmptyPages = 0
+                    allProblems.addAll(response.items)
+                }
+                
+                // 종료 조건 개선: items가 비어있거나 countPerPage보다 적으면 종료
+                hasMorePages = response.items.size == countPerPage
                 page++
                 
-                logger.debug("페이지 ${page - 1} 완료: 이번 페이지 ${response.items.size}개, 총 누적 ${allProblems.size}개")
+                logger.info("페이지 ${page - 1} 완료: 이번 페이지 ${response.items.size}개, 총 누적 ${allProblems.size}개, 다음 페이지 있음: $hasMorePages")
                 
-                // API 과부하 방지를 위한 잠시 대기 (선택사항)
-                kotlinx.coroutines.delay(100)
+                // API 과부하 방지를 위한 대기 시간 증가
+                kotlinx.coroutines.delay(200)
+                
+                // 안전장치: 너무 많은 페이지 방지 (최대 1000페이지)
+                if (page > 1000) {
+                    logger.warn("최대 페이지 수 도달로 종료: handle=$handle, page=$page")
+                    break
+                }
             }
             
-            logger.info("solved.ac 사용자 푼 문제 목록 조회 성공: handle=$handle, 총 문제 수=${allProblems.size}")
+            logger.info("solved.ac 사용자 푼 문제 목록 조회 완료: handle=$handle, 총 문제 수=${allProblems.size}, 마지막 페이지=${page - 1}")
             allProblems
             
         } catch (e: Exception) {
             logger.error("solved.ac 사용자 푼 문제 목록 조회 실패: handle=$handle", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 대안 방법: 사용자 통계 API를 통한 문제 수 확인
+     * solved.ac의 다른 엔드포인트를 시도해볼 수 있습니다
+     */
+    suspend fun fetchUserSolvedProblemsAlternative(handle: String): List<SolvedAcProblem> {
+        return try {
+            logger.info("대안 방법으로 사용자 푼 문제 목록 조회 시작: handle=$handle")
+            
+            val allProblems = mutableListOf<SolvedAcProblem>()
+            
+            // 방법 1: 다른 쿼리 방식 시도
+            val response = solvedAcWebClient
+                .get()
+                .uri("/search/problem?query=@{handle}&sort=solved&direction=desc", handle)
+                .retrieve()
+                .awaitBody<SolvedAcProblemSearchResponse>()
+                
+            allProblems.addAll(response.items)
+            logger.info("대안 방법 조회 결과: ${allProblems.size}개 문제 발견")
+            
+            allProblems
+            
+        } catch (e: Exception) {
+            logger.error("대안 방법으로 문제 조회 실패: handle=$handle", e)
             emptyList()
         }
     }

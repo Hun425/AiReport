@@ -156,47 +156,92 @@ class UserSyncServiceImpl(
         }
     }
     
+    @org.springframework.transaction.annotation.Transactional
     private fun saveUserSolvedProblems(userId: Long, problems: List<com.algoroadmap.domain.service.SolvedAcProblemData>): Int {
         var savedCount = 0
+        var skippedCount = 0
+        var errorCount = 0
         
         val user = userRepository.findById(userId) ?: return 0
         
-        problems.forEach { problemData ->
-            val existingProblem = userSolvedProblemRepository.findByUserIdAndProblemId(userId, problemData.problemId)
-            
-            if (existingProblem == null) {
-                // Problem 엔티티 생성 또는 조회
-                val problem = findOrCreateProblem(problemData)
+        logger.info("문제 저장 시작: userId=$userId, 총 문제 수=${problems.size}")
+        
+        problems.forEachIndexed { index, problemData ->
+            try {
+                val existingProblem = userSolvedProblemRepository.findByUserIdAndProblemId(userId, problemData.problemId)
                 
-                val userSolvedProblem = UserSolvedProblem(
-                    user = user,
-                    problem = problem,
-                    solvedAt = LocalDateTime.now() // 실제로는 solved.ac에서 제공하는 날짜 사용
-                )
+                if (existingProblem == null) {
+                    // Problem 엔티티 생성 또는 조회
+                    val problem = findOrCreateProblem(problemData)
+                    
+                    val userSolvedProblem = UserSolvedProblem(
+                        user = user,
+                        problem = problem,
+                        solvedAt = LocalDateTime.now() // 실제로는 solved.ac에서 제공하는 날짜 사용
+                    )
+                    
+                    val saved = userSolvedProblemRepository.save(userSolvedProblem)
+                    savedCount++
+                    
+                    if ((savedCount + skippedCount + errorCount) % 50 == 0) {
+                        logger.info("진행상황: ${savedCount + skippedCount + errorCount}/${problems.size} (저장: $savedCount, 건너뜀: $skippedCount, 오류: $errorCount)")
+                    }
+                } else {
+                    skippedCount++
+                    logger.debug("이미 존재하는 문제 건너뜀: userId=$userId, problemId=${problemData.problemId}")
+                }
                 
-                userSolvedProblemRepository.save(userSolvedProblem)
-                savedCount++
+            } catch (e: Exception) {
+                errorCount++
+                logger.error("문제 저장 실패: userId=$userId, problemId=${problemData.problemId}, title=${problemData.title}", e)
+                
+                // 심각한 에러의 경우 전체 프로세스 중단
+                if (e is org.springframework.dao.DataIntegrityViolationException ||
+                    e is jakarta.persistence.PersistenceException) {
+                    logger.error("심각한 DB 오류 발생. 저장 프로세스 중단: ${e.message}")
+                    throw e
+                }
             }
         }
         
+        logger.info("문제 저장 완료: userId=$userId, 저장=$savedCount, 건너뜀=$skippedCount, 오류=$errorCount")
         return savedCount
     }
     
     private fun findOrCreateProblem(problemData: com.algoroadmap.domain.service.SolvedAcProblemData): Problem {
-        // 기존 Problem 조회 시도
-        val existingProblem = problemRepository.findById(problemData.problemId)
-        if (existingProblem != null) {
-            return existingProblem
+        try {
+            // 기존 Problem 조회 시도
+            val existingProblem = problemRepository.findById(problemData.problemId)
+            if (existingProblem != null) {
+                logger.debug("기존 문제 사용: problemId=${problemData.problemId}, title=${problemData.title}")
+                return existingProblem
+            }
+            
+            // 새 Problem 생성
+            val newProblem = Problem(
+                id = problemData.problemId,
+                title = problemData.title,
+                difficulty = problemData.difficulty,
+                tags = problemData.tags.toMutableSet()
+            )
+            
+            val saved = problemRepository.save(newProblem)
+            logger.debug("새 문제 생성: problemId=${problemData.problemId}, title=${problemData.title}")
+            return saved
+            
+        } catch (e: Exception) {
+            logger.error("Problem 생성/조회 실패: problemId=${problemData.problemId}, title=${problemData.title}", e)
+            
+            // 중복 키 오류의 경우 다시 조회 시도 (동시성 문제 해결)
+            if (e is org.springframework.dao.DataIntegrityViolationException) {
+                val existingProblem = problemRepository.findById(problemData.problemId)
+                if (existingProblem != null) {
+                    logger.warn("중복 키 오류 후 기존 문제 발견: problemId=${problemData.problemId}")
+                    return existingProblem
+                }
+            }
+            
+            throw e
         }
-        
-        // 새 Problem 생성
-        val newProblem = Problem(
-            id = problemData.problemId,
-            title = problemData.title,
-            difficulty = problemData.difficulty,
-            tags = problemData.tags.toMutableSet()
-        )
-        
-        return problemRepository.save(newProblem)
     }
 }

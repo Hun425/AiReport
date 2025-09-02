@@ -1,7 +1,7 @@
 package com.algoroadmap.infrastructure.external;
 
 @org.springframework.stereotype.Component()
-@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u00002\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000e\n\u0002\b\u0002\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0000\b\u0017\u0018\u00002\u00020\u0001B\r\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u00a2\u0006\u0002\u0010\u0004J\u0018\u0010\b\u001a\u0004\u0018\u00010\t2\u0006\u0010\n\u001a\u00020\u000bH\u0096@\u00a2\u0006\u0002\u0010\fJ\u001c\u0010\r\u001a\b\u0012\u0004\u0012\u00020\u000f0\u000e2\u0006\u0010\n\u001a\u00020\u000bH\u0096@\u00a2\u0006\u0002\u0010\fR\u0016\u0010\u0005\u001a\n \u0007*\u0004\u0018\u00010\u00060\u0006X\u0092\u0004\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0002\u001a\u00020\u0003X\u0092\u0004\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0010"}, d2 = {"Lcom/algoroadmap/infrastructure/external/SolvedAcApiClient;", "", "solvedAcWebClient", "Lorg/springframework/web/reactive/function/client/WebClient;", "(Lorg/springframework/web/reactive/function/client/WebClient;)V", "logger", "Lorg/slf4j/Logger;", "kotlin.jvm.PlatformType", "fetchUserData", "Lcom/algoroadmap/infrastructure/external/SolvedAcUser;", "handle", "", "(Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "fetchUserSolvedProblems", "", "Lcom/algoroadmap/infrastructure/external/SolvedAcProblem;", "infrastructure"})
+@kotlin.Metadata(mv = {1, 9, 0}, k = 1, xi = 48, d1 = {"\u00004\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0002\b\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000e\n\u0002\b\u0002\n\u0002\u0010 \n\u0002\u0018\u0002\n\u0002\b\u0002\b\u0017\u0018\u00002\u00020\u0001B\r\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u00a2\u0006\u0002\u0010\u0004J\u0018\u0010\b\u001a\u0004\u0018\u00010\t2\u0006\u0010\n\u001a\u00020\u000bH\u0096@\u00a2\u0006\u0002\u0010\fJ\u001c\u0010\r\u001a\b\u0012\u0004\u0012\u00020\u000f0\u000e2\u0006\u0010\n\u001a\u00020\u000bH\u0096@\u00a2\u0006\u0002\u0010\fJ\u001c\u0010\u0010\u001a\b\u0012\u0004\u0012\u00020\u000f0\u000e2\u0006\u0010\n\u001a\u00020\u000bH\u0096@\u00a2\u0006\u0002\u0010\fR\u0016\u0010\u0005\u001a\n \u0007*\u0004\u0018\u00010\u00060\u0006X\u0092\u0004\u00a2\u0006\u0002\n\u0000R\u000e\u0010\u0002\u001a\u00020\u0003X\u0092\u0004\u00a2\u0006\u0002\n\u0000\u00a8\u0006\u0011"}, d2 = {"Lcom/algoroadmap/infrastructure/external/SolvedAcApiClient;", "", "solvedAcWebClient", "Lorg/springframework/web/reactive/function/client/WebClient;", "(Lorg/springframework/web/reactive/function/client/WebClient;)V", "logger", "Lorg/slf4j/Logger;", "kotlin.jvm.PlatformType", "fetchUserData", "Lcom/algoroadmap/infrastructure/external/SolvedAcUser;", "handle", "", "(Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;", "fetchUserSolvedProblems", "", "Lcom/algoroadmap/infrastructure/external/SolvedAcProblem;", "fetchUserSolvedProblemsAlternative", "infrastructure"})
 public class SolvedAcApiClient {
     @org.jetbrains.annotations.NotNull()
     private final org.springframework.web.reactive.function.client.WebClient solvedAcWebClient = null;
@@ -27,6 +27,17 @@ public class SolvedAcApiClient {
      */
     @org.jetbrains.annotations.Nullable()
     public java.lang.Object fetchUserSolvedProblems(@org.jetbrains.annotations.NotNull()
+    java.lang.String handle, @org.jetbrains.annotations.NotNull()
+    kotlin.coroutines.Continuation<? super java.util.List<com.algoroadmap.infrastructure.external.SolvedAcProblem>> $completion) {
+        return null;
+    }
+    
+    /**
+     * 대안 방법: 사용자 통계 API를 통한 문제 수 확인
+     * solved.ac의 다른 엔드포인트를 시도해볼 수 있습니다
+     */
+    @org.jetbrains.annotations.Nullable()
+    public java.lang.Object fetchUserSolvedProblemsAlternative(@org.jetbrains.annotations.NotNull()
     java.lang.String handle, @org.jetbrains.annotations.NotNull()
     kotlin.coroutines.Continuation<? super java.util.List<com.algoroadmap.infrastructure.external.SolvedAcProblem>> $completion) {
         return null;
