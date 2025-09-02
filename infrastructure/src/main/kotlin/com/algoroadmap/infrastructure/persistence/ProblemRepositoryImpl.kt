@@ -21,4 +21,13 @@ class ProblemRepositoryImpl(
     }
     
     override fun saveAll(problems: List<Problem>): List<Problem> = problemJpaRepository.saveAll(problems)
+    
+    override fun countAllByTag(): Map<String, Int> {
+        val results = problemJpaRepository.countAllByTag()
+        return results.associate { 
+            it[0] as String to (it[1] as Long).toInt()
+        }
+    }
+    
+    override fun countAll(): Long = problemJpaRepository.count()
 }

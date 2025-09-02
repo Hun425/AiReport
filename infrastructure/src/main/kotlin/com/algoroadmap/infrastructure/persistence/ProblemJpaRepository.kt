@@ -13,4 +13,12 @@ interface ProblemJpaRepository : JpaRepository<Problem, Long> {
         WHERE t IN :tags
     """)
     fun findByTagsIn(@Param("tags") tags: List<String>): List<Problem>
+    
+    @Query("""
+        SELECT tag, COUNT(*) as count
+        FROM Problem p 
+        JOIN p.tags tag 
+        GROUP BY tag
+    """)
+    fun countAllByTag(): List<Array<Any>>
 }

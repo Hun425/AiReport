@@ -13,41 +13,103 @@ import org.springframework.stereotype.Service
 class DashboardServiceImpl(
     private val userRepository: UserRepository,
     private val userSolvedProblemRepository: UserSolvedProblemRepository,
-    private val codeReviewRepository: CodeReviewRepository
+    private val codeReviewRepository: CodeReviewRepository,
+    private val problemRepository: com.algoroadmap.domain.repository.ProblemRepository
 ) : DashboardService {
     
     override fun getUserTagAnalysis(userId: Long): Map<String, TagAnalysisResult> {
+        val logger = org.slf4j.LoggerFactory.getLogger(DashboardServiceImpl::class.java)
+        
         // 사용자가 푼 문제의 태그별 개수 조회
         val rawUserTagCounts = userSolvedProblemRepository.findTagAnalysByUserId(userId)
+        logger.info("사용자 태그 분석 시작: userId=$userId, 원본 태그 수=${rawUserTagCounts.size}")
+        logger.debug("원본 사용자 태그 데이터: $rawUserTagCounts")
         
         // 태그 매핑 및 그룹핑 처리
         val processedTagCounts = processTagsForDisplay(rawUserTagCounts)
+        logger.info("태그 처리 완료: 표시용 태그 수=${processedTagCounts.size}")
+        logger.debug("처리된 사용자 태그 데이터: $processedTagCounts")
         
-        // 주요 태그별 전체 문제 수 (실제 데이터 기반으로 추후 개선)
-        val tagTotalProblems = mapOf(
-            "DP" to 100,
-            "그래프 탐색" to 100, 
-            "구현" to 120,
-            "그리디" to 60,
-            "문자열" to 80,
-            "수학" to 90,
-            "정렬" to 40,
-            "이분탐색" to 50,
-            "브루트포스" to 70,
-            "자료구조" to 85,
-            "시뮬레이션" to 45,
-            "기타" to 200 // 기타 카테고리는 큰 값으로 설정
-        )
+        // 실제 DB 데이터 기반으로 태그별 전체 문제 수 조회
+        val realTagTotalProblems = try {
+            val rawTagTotals = problemRepository.countAllByTag()
+            logger.info("DB에서 태그별 전체 문제 수 조회 성공: ${rawTagTotals.size}개 태그")
+            logger.debug("원본 전체 태그 데이터: $rawTagTotals")
+            
+            val processed = processTagTotalsForDisplay(rawTagTotals)
+            logger.info("전체 문제 수 처리 완료: ${processed.size}개 표시용 태그")
+            logger.debug("처리된 전체 태그 데이터: $processed")
+            processed
+        } catch (e: Exception) {
+            // DB 조회 실패 시 기본값 사용
+            logger.warn("태그별 전체 문제 수 조회 실패, 기본값 사용: ${e.message}")
+            val defaults = getDefaultTagTotalProblems()
+            logger.info("기본값 사용: ${defaults.size}개 태그")
+            defaults
+        }
         
-        return processedTagCounts.mapValues { (tag, solvedCount) ->
-            val totalInTag = tagTotalProblems[tag] ?: 50 // 기본값
+        // 최종 결과 생성 및 로깅
+        val finalResults = processedTagCounts.mapValues { (tag, solvedCount) ->
+            val totalInTag = realTagTotalProblems[tag] ?: run {
+                // 실제 데이터에 없는 태그의 경우 추정값 계산
+                val averageTotalPerTag = if (realTagTotalProblems.isNotEmpty()) {
+                    realTagTotalProblems.values.average().toInt()
+                } else {
+                    50
+                }
+                logger.debug("태그 '$tag'의 전체 문제 수를 찾을 수 없어 평균값 사용: $averageTotalPerTag")
+                averageTotalPerTag
+            }
+            
+            val percentage = if (totalInTag > 0) (solvedCount.toDouble() / totalInTag * 100) else 0.0
+            logger.debug("태그 '$tag': 푼 문제=${solvedCount}, 전체=${totalInTag}, 퍼센트=${String.format("%.1f", percentage)}%")
+            
             TagAnalysisResult(
                 tag = tag,
                 solvedCount = solvedCount,
                 totalProblemsInTag = totalInTag
             )
         }
+        
+        logger.info("태그 분석 완료: ${finalResults.size}개 태그 처리됨")
+        return finalResults
     }
+    
+    /**
+     * 실제 DB 태그 데이터를 표시용으로 그룹핑 (사용자 태그와 동일한 로직)
+     */
+    private fun processTagTotalsForDisplay(rawTagTotals: Map<String, Int>): Map<String, Int> {
+        val normalizedTotals = mutableMapOf<String, Int>()
+        
+        rawTagTotals.forEach { (originalTag, count) ->
+            val mappedTag = mapToDisplayTag(originalTag)
+            normalizedTotals[mappedTag] = (normalizedTotals[mappedTag] ?: 0) + count
+        }
+        
+        return normalizedTotals
+    }
+    
+    /**
+     * 기본 태그별 전체 문제 수 (DB 조회 실패 시 사용)
+     */
+    private fun getDefaultTagTotalProblems(): Map<String, Int> = mapOf(
+        "DP" to 100,
+        "그래프 탐색" to 100, 
+        "구현" to 120,
+        "그리디" to 60,
+        "문자열" to 80,
+        "수학" to 90,
+        "정렬" to 40,
+        "이분탐색" to 50,
+        "브루트포스" to 70,
+        "자료구조" to 85,
+        "트리" to 65,
+        "누적합" to 30,
+        "투 포인터" to 25,
+        "백트래킹" to 40,
+        "조합론" to 35,
+        "기타" to 200
+    )
     
     /**
      * 원형 그래프 표시용 태그 처리
