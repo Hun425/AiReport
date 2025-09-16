@@ -6,6 +6,8 @@ import com.algoroadmap.application.dto.SubscriptionInfo
 import com.algoroadmap.application.dto.UserResponse
 import com.algoroadmap.domain.entity.User
 import com.algoroadmap.domain.exception.DomainException
+import com.algoroadmap.domain.vo.Email
+import com.algoroadmap.domain.vo.SolvedAcHandle
 import com.algoroadmap.domain.repository.UserRepository
 import com.algoroadmap.domain.service.SolvedAcService
 import com.algoroadmap.domain.service.SolvedAcUserData
@@ -57,7 +59,7 @@ class AuthService(
             }
             
             // 4. JWT 토큰 생성
-            val accessToken = tokenService.generateToken(user.id, user.email ?: "")
+            val accessToken = tokenService.generateToken(user.id, user.email?.value ?: "")
 
             
             return AuthResult(
@@ -75,7 +77,7 @@ class AuthService(
         existingUser: User, 
         googleUserInfo: OAuthService.GoogleUserInfo
     ): User {
-        existingUser.email = googleUserInfo.email
+        existingUser.email = Email.create(googleUserInfo.email)
         existingUser.profileImageUrl = googleUserInfo.picture
         existingUser.updatedAt = LocalDateTime.now()
         
@@ -87,9 +89,9 @@ class AuthService(
     ): User {
         val newUser = User(
             googleId = googleUserInfo.sub,
-            email = googleUserInfo.email,
+            email = Email.create(googleUserInfo.email),
             profileImageUrl = googleUserInfo.picture,
-            solvedAcHandle = "", // 나중에 별도 등록
+            solvedAcHandle = null, // 나중에 별도 등록
             solvedAcClass = 0,
             solvedCount = 0,
             rank = 0,
@@ -137,7 +139,7 @@ class AuthService(
             ?: throw DomainException.UserNotFoundException(userId)
         
         // 3. 사용자 정보 업데이트
-        user.solvedAcHandle = handle
+        user.solvedAcHandle = SolvedAcHandle.create(handle)
         user.profileImageUrl = solvedAcUser.profileImageUrl
         user.solvedAcClass = solvedAcUser.solvedAcClass
         user.solvedCount = solvedAcUser.solvedCount
@@ -154,8 +156,8 @@ class AuthService(
 private fun User.toUserResponse(): UserResponse {
     return UserResponse(
         id = this.id,
-        email = this.email,
-        solvedAcHandle = this.solvedAcHandle.takeIf { it.isNotEmpty() },
+        email = this.email?.value,
+        solvedAcHandle = this.solvedAcHandle?.value,
         profileImageUrl = this.profileImageUrl,
         solvedAcClass = this.solvedAcClass,
         solvedCount = this.solvedCount,

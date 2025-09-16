@@ -15,7 +15,7 @@ data class DashboardResponse(
  * 대시보드용 사용자 기본 정보
  */
 data class DashboardUserInfo(
-    val solvedAcHandle: String,
+    val solvedAcHandle: String?,
     val profileImageUrl: String?,
     val solvedAcClass: Int,
     val solvedCount: Int

@@ -24,7 +24,7 @@ data class CompanyInfo(
         fun from(company: Company): CompanyInfo {
             return CompanyInfo(
                 id = company.id,
-                name = company.name,
+                name = company.name.value,
                 logoUrl = company.logoUrl,
                 description = company.description
             )

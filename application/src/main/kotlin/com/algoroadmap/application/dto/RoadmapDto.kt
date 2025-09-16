@@ -60,7 +60,7 @@ data class RoadmapProblemInfo(
             return RoadmapProblemInfo(
                 problemId = problem.id,
                 title = problem.title,
-                difficulty = problem.difficulty ?: "Unknown",
+                difficulty = problem.difficulty?.value ?: "Unknown",
                 isSolved = roadmapProblem.isSolvedByUser(user),
                 hasReview = roadmapProblem.hasReviewByUser(user),
                 bojUrl = "https://www.acmicpc.net/problem/${problem.id}"
@@ -75,7 +75,7 @@ data class RoadmapProblemInfo(
 fun Roadmap.toDetailResponse(): RoadmapDetailResponse {
     return RoadmapDetailResponse(
         roadmapId = this.id,
-        companyName = this.company.name,
+        companyName = this.company.name.value,
         durationInMonths = this.durationInMonths,
         totalProgress = this.calculateTotalProgress(),
         createdAt = this.createdAt,

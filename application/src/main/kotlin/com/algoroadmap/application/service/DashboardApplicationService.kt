@@ -32,7 +32,7 @@ class DashboardApplicationService(
         
         // 3. 사용자 기본 정보 생성
         val userInfo = DashboardUserInfo(
-            solvedAcHandle = user.solvedAcHandle,
+            solvedAcHandle = user.solvedAcHandle?.value,
             profileImageUrl = user.profileImageUrl,
             solvedAcClass = user.solvedAcClass,
             solvedCount = userResult.totalSolvedProblems

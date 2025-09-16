@@ -1,8 +1,10 @@
 package com.algoroadmap.infrastructure.service
 
 import com.algoroadmap.domain.entity.User
-import com.algoroadmap.domain.entity.UserSolvedProblem  
+import com.algoroadmap.domain.entity.UserSolvedProblem
 import com.algoroadmap.domain.entity.Problem
+import com.algoroadmap.domain.vo.ProblemDifficulty
+import com.algoroadmap.domain.vo.SolvedAcHandle
 import com.algoroadmap.domain.repository.UserRepository
 import com.algoroadmap.domain.repository.UserSolvedProblemRepository
 import com.algoroadmap.domain.repository.ProblemRepository
@@ -101,7 +103,7 @@ class UserSyncServiceImpl(
             
             // 2단계: 풀어온 문제 목록 조회
             updateSyncStatus(userId, 40, "풀어온 문제 목록을 조회하는 중...")
-            val solvedProblems = solvedAcService.fetchUserSolvedProblems(user.solvedAcHandle)
+            val solvedProblems = solvedAcService.fetchUserSolvedProblems(user.solvedAcHandle?.value ?: "")
             logger.info("조회된 문제 수: ${solvedProblems.size}개")
             
             // 3단계: 데이터베이스에 저장
@@ -143,7 +145,7 @@ class UserSyncServiceImpl(
     }
     
     private suspend fun updateUserData(user: User) {
-        val latestUserData = solvedAcService.fetchUserData(user.solvedAcHandle)
+        val latestUserData = solvedAcService.fetchUserData(user.solvedAcHandle?.value ?: "")
         
         if (latestUserData != null) {
             user.profileImageUrl = latestUserData.profileImageUrl
@@ -221,7 +223,7 @@ class UserSyncServiceImpl(
             val newProblem = Problem(
                 id = problemData.problemId,
                 title = problemData.title,
-                difficulty = problemData.difficulty,
+                difficulty = ProblemDifficulty.create(problemData.difficulty),
                 tags = problemData.tags.toMutableSet()
             )
             

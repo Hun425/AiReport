@@ -101,12 +101,14 @@ class RoadmapApplicationService(
             ?: return null
         
         // 3. 특정 주차 필터링 처리
-        val filteredRoadmap = if (weekFilter != null) {
+        if (weekFilter != null) {
             val targetWeek = roadmapWeekRepository.findByRoadmapIdAndWeekNumber(roadmap.id, weekFilter)
-            roadmap.copy(weeks = targetWeek?.let { listOf(it) } ?: emptyList())
-        } else {
-            roadmap
+            // 특정 주차만 필터링하여 weeks 리스트 수정
+            roadmap.weeks.clear()
+            targetWeek?.let { roadmap.weeks.add(it) }
         }
+
+        val filteredRoadmap = roadmap
         
         return filteredRoadmap.toDetailResponse()
     }

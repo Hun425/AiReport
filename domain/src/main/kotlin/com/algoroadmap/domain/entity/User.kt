@@ -1,5 +1,7 @@
 package com.algoroadmap.domain.entity
 
+import com.algoroadmap.domain.vo.Email
+import com.algoroadmap.domain.vo.SolvedAcHandle
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -14,10 +16,10 @@ class User(
     var googleId: String? = null,
     
     @Column(name = "email")
-    var email: String? = null,
-    
+    var email: Email? = null,
+
     @Column(name = "solved_ac_handle", unique = true)
-    var solvedAcHandle: String = "",
+    var solvedAcHandle: SolvedAcHandle? = null,
     
     @Column(name = "profile_image_url")
     var profileImageUrl: String? = null,
@@ -61,7 +63,7 @@ class User(
         id = 0,
         googleId = null,
         email = null,
-        solvedAcHandle = "",
+        solvedAcHandle = null,
         profileImageUrl = null,
         solvedAcClass = 0,
         solvedCount = 0,
@@ -116,7 +118,25 @@ class User(
     }
     
     override fun toString(): String {
-        return "User(id=$id, email=$email, solvedAcHandle='$solvedAcHandle')"
+        return "User(id=$id, email=${email?.value}, solvedAcHandle=${solvedAcHandle?.value})"
+    }
+
+    /**
+     * 사용자가 solved.ac 핸들을 등록했는지 확인
+     */
+    fun hasSolvedAcHandle(): Boolean = solvedAcHandle != null
+
+    /**
+     * 사용자가 프리미엄 구독자인지 확인
+     */
+    fun isPremiumUser(): Boolean = subscriptionPlan == SubscriptionPlan.PREMIUM
+
+    /**
+     * 오늘 사용한 리뷰 횟수 초기화
+     */
+    fun resetDailyReviewUsage() {
+        this.dailyReviewUsed = 0
+        this.updatedAt = LocalDateTime.now()
     }
 }
 

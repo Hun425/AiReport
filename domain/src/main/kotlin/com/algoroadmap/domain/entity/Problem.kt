@@ -1,5 +1,6 @@
 package com.algoroadmap.domain.entity
 
+import com.algoroadmap.domain.vo.ProblemDifficulty
 import jakarta.persistence.*
 
 @Entity
@@ -12,7 +13,7 @@ class Problem(
     var title: String = "",
     
     @Column(name = "difficulty")
-    var difficulty: String? = null, // "Bronze 5", "Silver 3", "Gold 2" 등
+    var difficulty: ProblemDifficulty? = null,
     
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "problem_tags", joinColumns = [JoinColumn(name = "problem_id")])
@@ -23,6 +24,32 @@ class Problem(
     constructor() : this(0, "", null, mutableSetOf())
     
     fun getBojUrl(): String = "https://www.acmicpc.net/problem/$id"
+
+    /**
+     * 문제가 쉬운지 확인 (Bronze, Silver)
+     */
+    fun isEasy(): Boolean = difficulty?.isEasy() ?: false
+
+    /**
+     * 문제가 어려운지 확인 (Platinum 이상)
+     */
+    fun isHard(): Boolean = difficulty?.isHard() ?: false
+
+    /**
+     * 특정 태그를 포함하는지 확인
+     */
+    fun hasTag(tagName: String): Boolean = tags.contains(tagName)
+
+    /**
+     * 주요 알고리즘 유형 태그들 필터링
+     */
+    fun getMainAlgorithmTags(): Set<String> {
+        val mainTags = setOf(
+            "DP", "그래프 탐색", "구현", "그리디", "문자열",
+            "수학", "정렬", "이분 탐색", "자료 구조", "조합론"
+        )
+        return tags.filter { it in mainTags }.toSet()
+    }
     
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -35,6 +62,6 @@ class Problem(
     }
     
     override fun toString(): String {
-        return "Problem(id=$id, title='$title', difficulty=$difficulty)"
+        return "Problem(id=$id, title='$title', difficulty=${difficulty?.value})"
     }
 }
